@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS selftrack
+CREATE DATABASE IF NOT EXISTS lifetrack
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE selftrack;
+USE lifetrack;
