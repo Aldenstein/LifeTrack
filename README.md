@@ -28,7 +28,7 @@ Ce projet est organisé autour d'une application Rust, de scripts SQL et des fic
 │   ├── main.rs
 │   ├── models.rs
 │   ├── routes.rs
-│   ├── sql_to_json.rs
+│   ├── auth.rs
 │   └── utils.rs
 └── target
 ```
@@ -69,43 +69,43 @@ Il peut contenir la création de la base, du schéma principal ou des éléments
 
 ##### Dossier `src`
 
-Ce dossier contient tout le code source Rust du projet.
+Ce dossier contient l’ensemble du code source Rust de l’application. Il regroupe le point d’entrée, la configuration, les accès à la base de données, les modèles, les routes et les modules utilitaires nécessaires au fonctionnement du backend.
 
 ###### `src/main.rs`
-Point d’entrée de l’application.  
-C’est le fichier exécuté au démarrage avec `cargo run`. Il initialise l’application, charge la configuration et lance la logique principale.
+Point d’entrée principal de l’application.  
+Ce fichier est exécuté au démarrage avec `cargo run` et sert à initialiser la configuration, les connexions partagées, l’état global et le lancement du serveur ou de la logique principale.
 
 ###### `src/api.rs`
-Contient la logique de l’API.  
-On y place généralement les handlers, les appels réseau ou les fonctions qui exposent les fonctionnalités vers l’extérieur.
+Contient la logique applicative exposée par l’API.  
+On y place généralement les handlers, les traitements métier liés aux requêtes entrantes et les fonctions appelées par les routes HTTP.
 
 ###### `src/config.rs`
 Centralise la configuration du projet.  
-Ce fichier sert souvent à lire les variables d’environnement comme `DATABASE_URL`, `API_HOST` ou `API_PORT`.
+Ce module sert à charger les variables d’environnement et les paramètres applicatifs, par exemple `DATABASE_URL`, l’adresse du serveur ou d’autres options d’exécution.
 
 ###### `src/db.rs`
-Gère la connexion à la base de données.  
-On y place la création du pool de connexion, les helpers d’accès SQL et la logique bas niveau de persistance.
+Gère l’accès à la base de données.  
+On y place la création du pool de connexions, les helpers d’accès SQL et les fonctions de persistance nécessaires au backend.
 
 ###### `src/errors.rs`
-Définit les erreurs applicatives.  
-Il permet d’uniformiser la gestion des erreurs pour éviter de disperser les messages et les types d’erreurs dans tout le projet.
+Définit les erreurs applicatives du projet.  
+Ce module permet d’uniformiser la gestion des erreurs, de centraliser les messages et de simplifier leur propagation dans les différentes couches de l’application.
 
 ###### `src/models.rs`
 Contient les structures de données du projet.  
-On y définit les modèles métier, les structs échangées avec la base de données ou les objets sérialisés en JSON.
+On y définit les modèles métier, les structures échangées avec la base de données et les objets sérialisés ou désérialisés en JSON pour l’API.
 
 ###### `src/routes.rs`
-Déclare les routes de l’application.  
-Ce fichier est utile si le projet expose une API HTTP et permet d’organiser les endpoints proprement.
+Déclare et organise les routes de l’application.  
+Ce fichier permet de regrouper les endpoints HTTP, d’associer les chemins aux handlers et de garder une structure claire côté serveur.
 
 ###### `src/sql_to_json.rs`
 Module spécialisé dans la transformation de données SQL vers JSON.  
-Il peut contenir la logique qui exécute une requête puis convertit le résultat dans un format JSON exploitable.
+Il peut contenir la logique qui récupère des données depuis la base ou depuis des requêtes SQL, puis les convertit dans un format JSON exploitable par l’API ou la webapp.
 
 ###### `src/utils.rs`
-Contient les fonctions utilitaires partagées.  
-On y place les helpers génériques réutilisés dans plusieurs modules, tant qu’ils ne méritent pas un module métier dédié.
+Contient les fonctions utilitaires partagées entre plusieurs modules.  
+On y place les helpers génériques réutilisables, tant qu’ils ne relèvent pas d’un domaine métier ou d’un module spécifique.
 
 ##### Dossier `target`
 
