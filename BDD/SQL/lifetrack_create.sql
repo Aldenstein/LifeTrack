@@ -1,4 +1,16 @@
 -- -----------------------------------------------------------
+-- 0. UTILISATEUR
+-- -----------------------------------------------------------
+
+CREATE TABLE UTILISATEUR (
+    Usrid         INT          NOT NULL AUTO_INCREMENT,
+    UsrpublicId   CHAR(64)     NOT NULL,
+    UsrcreatedAt  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (Usrid),
+    UNIQUE (UsrpublicId)
+);
+
+-- -----------------------------------------------------------
 -- 1. FINANCES
 -- -----------------------------------------------------------
 
@@ -11,7 +23,9 @@ CREATE TABLE TYPE (
 CREATE TABLE COMPTE (
     Comid     INT    NOT NULL AUTO_INCREMENT,
     Comsolde  DOUBLE NOT NULL,
-    PRIMARY KEY (Comid)
+    Usrid     INT    NOT NULL,
+    PRIMARY KEY (Comid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE MOUVEMENT (
@@ -20,9 +34,11 @@ CREATE TABLE MOUVEMENT (
     Moudate    DATE   NOT NULL,
     Typid      INT,
     Comid      INT,
+    Usrid      INT    NOT NULL,
     PRIMARY KEY (Mouid),
     FOREIGN KEY (Typid) REFERENCES TYPE(Typid),
-    FOREIGN KEY (Comid) REFERENCES COMPTE(Comid)
+    FOREIGN KEY (Comid) REFERENCES COMPTE(Comid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE FACTURE (
@@ -34,9 +50,11 @@ CREATE TABLE FACTURE (
     Facdone           TINYINT(1),    -- CALCULÉ côté applicatif
     Typid             INT,
     Comid             INT,
+    Usrid             INT  NOT NULL,
     PRIMARY KEY (Facid),
     FOREIGN KEY (Typid) REFERENCES TYPE(Typid),
-    FOREIGN KEY (Comid) REFERENCES COMPTE(Comid)
+    FOREIGN KEY (Comid) REFERENCES COMPTE(Comid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -54,8 +72,10 @@ CREATE TABLE HABITUDE (
     Habid  INT          NOT NULL AUTO_INCREMENT,
     Habnom VARCHAR(500) NOT NULL,
     Catid  INT,
+    Usrid  INT          NOT NULL,
     PRIMARY KEY (Habid),
-    FOREIGN KEY (Catid) REFERENCES CATEGORIE(Catid)
+    FOREIGN KEY (Catid) REFERENCES CATEGORIE(Catid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -70,10 +90,12 @@ CREATE TABLE HUMEUR (
 );
 
 CREATE TABLE DATE_HUMEUR (
+    Usrid  INT  NOT NULL,
     DHdate DATE NOT NULL,
     Humid  INT,
-    PRIMARY KEY (DHdate),
-    FOREIGN KEY (Humid) REFERENCES HUMEUR(Humid)
+    PRIMARY KEY (Usrid, DHdate),
+    FOREIGN KEY (Humid) REFERENCES HUMEUR(Humid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -84,8 +106,10 @@ CREATE TABLE BILAN (
     Bilid   INT  NOT NULL AUTO_INCREMENT,
     Bildate DATE NOT NULL,
     Humid   INT,
+    Usrid   INT  NOT NULL,
     PRIMARY KEY (Bilid),
-    FOREIGN KEY (Humid) REFERENCES HUMEUR(Humid)
+    FOREIGN KEY (Humid) REFERENCES HUMEUR(Humid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE HABITUDE_BILAN (
@@ -106,7 +130,9 @@ CREATE TABLE HYDRATATION (
     Hyddate      DATE NOT NULL,
     Hydquantite  INT  NOT NULL,
     Hydobjectif  INT  NOT NULL,
-    PRIMARY KEY (Hydid)
+    Usrid        INT  NOT NULL,
+    PRIMARY KEY (Hydid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -120,7 +146,9 @@ CREATE TABLE SOMMEIL (
     Somlever     TIME       NOT NULL,
     Somduree     INT,                 -- CALCULÉ côté applicatif
     Somreposant  TINYINT(1),          -- OPTIONNEL
-    PRIMARY KEY (Somid)
+    Usrid        INT        NOT NULL,
+    PRIMARY KEY (Somid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -135,7 +163,9 @@ CREATE TABLE REPAS (
     Repproteines    DOUBLE,
     Repglucides     DOUBLE,
     Replipides      DOUBLE,
-    PRIMARY KEY (Repid)
+    Usrid           INT    NOT NULL,
+    PRIMARY KEY (Repid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -149,7 +179,9 @@ CREATE TABLE MESURE_CORPORELLE (
     Mestaille     DOUBLE,             -- OPTIONNEL
     MesIMC        DOUBLE,             -- CALCULÉ côté applicatif
     MesMetaBasal  DOUBLE,             -- CALCULÉ côté applicatif
-    PRIMARY KEY (Mesid)
+    Usrid         INT    NOT NULL,
+    PRIMARY KEY (Mesid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -169,8 +201,10 @@ CREATE TABLE SEANCE_SPORT (
     Seaduree      INT    NOT NULL,
     Seaintensite  ENUM('FAIBLE','MODERE','INTENSE') NOT NULL,
     Seacalories   DOUBLE,             -- CALCULÉ côté applicatif
+    Usrid         INT    NOT NULL,
     PRIMARY KEY (Seaid),
-    FOREIGN KEY (Stypid) REFERENCES SPORT_TYPE(Stypid)
+    FOREIGN KEY (Stypid) REFERENCES SPORT_TYPE(Stypid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -181,7 +215,9 @@ CREATE TABLE SOBRIETE (
     Sobid    INT      NOT NULL AUTO_INCREMENT,
     Sobdebut DATETIME NOT NULL,
     Sobfin   DATETIME,                -- NULLABLE = en cours
-    PRIMARY KEY (Sobid)
+    Usrid    INT      NOT NULL,
+    PRIMARY KEY (Sobid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE CONSOMMATION_ALCOOL (
@@ -192,7 +228,9 @@ CREATE TABLE CONSOMMATION_ALCOOL (
     Alcjeun        TINYINT(1) NOT NULL,
     Alcalcoolemie  DOUBLE,            -- CALCULÉ côté applicatif
     Alctempsobre   INT,               -- CALCULÉ côté applicatif
-    PRIMARY KEY (Alcid)
+    Usrid          INT      NOT NULL,
+    PRIMARY KEY (Alcid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -211,8 +249,10 @@ CREATE TABLE TODO (
     Toddone  TINYINT(1)   NOT NULL,
     Todtimer INT,                     -- NULLABLE = sans timer
     Totypid  INT,
+    Usrid    INT          NOT NULL,
     PRIMARY KEY (Todid),
-    FOREIGN KEY (Totypid) REFERENCES TODO_TYPE(Totypid)
+    FOREIGN KEY (Totypid) REFERENCES TODO_TYPE(Totypid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
@@ -224,5 +264,7 @@ CREATE TABLE COHERENCE_CARDIAQUE (
     Cohdateheure   DATETIME NOT NULL,
     Cohduree       INT      NOT NULL,
     Cohparamcercle JSON,               -- OPTIONNEL
-    PRIMARY KEY (Cohid)
+    Usrid          INT      NOT NULL,
+    PRIMARY KEY (Cohid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
