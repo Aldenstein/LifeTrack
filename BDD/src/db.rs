@@ -1,15 +1,14 @@
-use crate::models::User;
+use sqlx::{Pool, MySql};
+use sqlx::mysql::MySqlPoolOptions;
 
-pub fn get_users() -> Vec<User> {
-    let u1 = User {
-        id: 1,
-        name: String::from("Alice"),
-    };
+use crate::config::DbConfig;
 
-    let u2 = User {
-        id: 2,
-        name: String::from("Bob"),
-    };
+pub type DbPool = Pool<MySql>;
 
-    vec![u1, u2]
+pub async fn connect_db(cfg: &DbConfig) -> DbPool {
+    MySqlPoolOptions::new()
+        .max_connections(5)
+        .connect(&cfg.url)
+        .await
+        .expect("Impossible de se connecter à la base MariaDB/MySQL")
 }

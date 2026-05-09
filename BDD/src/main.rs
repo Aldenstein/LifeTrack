@@ -8,13 +8,15 @@ mod routes;
 mod utils;
 
 use crate::config::load_config;
-use crate::db::get_users;
+use crate::db::{connect_db, DbPool};
 
-fn main() {
-    load_config();
+#[tokio::main]
+async fn main() {
+    // 1. Charger la config
+    let cfg = load_config();
 
-    let users = get_users();
-    println!("Users from fake DB: {:?}", users);
+    // 2. Se connecter à la base (création du pool)
+    let pool: DbPool = connect_db(&cfg).await;
 
-    println!("Server is running");
+    println!("Connexion à la base réussie !");
 }
