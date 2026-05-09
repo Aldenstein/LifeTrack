@@ -22,6 +22,7 @@ CREATE TABLE TYPE (
 
 CREATE TABLE COMPTE (
     Comid     INT    NOT NULL AUTO_INCREMENT,
+    Comnom    VARCHAR(255) NOT NULL,
     Comsolde  DOUBLE NOT NULL,
     Usrid     INT    NOT NULL,
     PRIMARY KEY (Comid),
@@ -48,10 +49,13 @@ CREATE TABLE FACTURE (
     Facintervalle     INT  NOT NULL,
     FacdateProchain   DATE,          -- CALCULÉ côté applicatif
     Facdone           TINYINT(1),    -- CALCULÉ côté applicatif
+    Mouid             INT           NOT NULL,
     Typid             INT,
     Comid             INT,
     Usrid             INT  NOT NULL,
     PRIMARY KEY (Facid),
+    UNIQUE (Mouid),
+    FOREIGN KEY (Mouid) REFERENCES MOUVEMENT(Mouid),
     FOREIGN KEY (Typid) REFERENCES TYPE(Typid),
     FOREIGN KEY (Comid) REFERENCES COMPTE(Comid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
