@@ -3,3 +3,5 @@
 !.env.example
 target
 BDD/target
+BDD/tests
+BDD/validate.sh
