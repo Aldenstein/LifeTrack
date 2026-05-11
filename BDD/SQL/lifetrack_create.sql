@@ -3,9 +3,9 @@
 -- -----------------------------------------------------------
 
 CREATE TABLE UTILISATEUR (
-    Usrid         INT          NOT NULL AUTO_INCREMENT,
-    UsrpublicId   CHAR(64)     NOT NULL,
-    UsrcreatedAt  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Usrid        INT      NOT NULL AUTO_INCREMENT,
+    UsrpublicId  CHAR(64) NOT NULL,
+    UsrcreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (Usrid),
     UNIQUE (UsrpublicId)
 );
@@ -15,27 +15,28 @@ CREATE TABLE UTILISATEUR (
 -- -----------------------------------------------------------
 
 CREATE TABLE TYPE (
-    Typid   INT          NOT NULL AUTO_INCREMENT,
+    Typid    INT          NOT NULL AUTO_INCREMENT,
     Typtitre VARCHAR(255) NOT NULL,
     PRIMARY KEY (Typid)
 );
 
 CREATE TABLE COMPTE (
-    Comid     INT    NOT NULL AUTO_INCREMENT,
-    Comnom    VARCHAR(255) NOT NULL,
-    Comsolde  DOUBLE NOT NULL,
-    Usrid     INT    NOT NULL,
+    Comid    INT          NOT NULL AUTO_INCREMENT,
+    Comnom   VARCHAR(255) NOT NULL,
+    Comsolde DOUBLE       NOT NULL,
+    Usrid    INT          NOT NULL,
     PRIMARY KEY (Comid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE MOUVEMENT (
-    Mouid      INT    NOT NULL AUTO_INCREMENT,
-    Moumontant DOUBLE NOT NULL,
-    Moudate    DATE   NOT NULL,
-    Typid      INT,
-    Comid      INT,
-    Usrid      INT    NOT NULL,
+    Mouid          INT    NOT NULL AUTO_INCREMENT,
+    Moumontant     DOUBLE NOT NULL,
+    Moudate        DATE   NOT NULL,
+    Moudescription TEXT,
+    Typid          INT,
+    Comid          INT,
+    Usrid          INT    NOT NULL,
     PRIMARY KEY (Mouid),
     FOREIGN KEY (Typid) REFERENCES TYPE(Typid),
     FOREIGN KEY (Comid) REFERENCES COMPTE(Comid),
@@ -43,16 +44,16 @@ CREATE TABLE MOUVEMENT (
 );
 
 CREATE TABLE FACTURE (
-    Facid             INT  NOT NULL AUTO_INCREMENT,
-    Facdate           DATE NOT NULL,
-    Facperiodicite    ENUM('JOUR','SEMAINE','MOIS','ANNEE') NOT NULL,
-    Facintervalle     INT  NOT NULL,
-    FacdateProchain   DATE,          -- CALCULÉ côté applicatif
-    Facdone           TINYINT(1),    -- CALCULÉ côté applicatif
-    Mouid             INT           NOT NULL,
-    Typid             INT,
-    Comid             INT,
-    Usrid             INT  NOT NULL,
+    Facid           INT                              NOT NULL AUTO_INCREMENT,
+    Facdate         DATE                             NOT NULL,
+    Facperiodicite  ENUM('JOUR','SEMAINE','MOIS','ANNEE') NOT NULL,
+    Facintervalle   INT                              NOT NULL,
+    FacdateProchain DATE,           -- CALCULE cote applicatif
+    Facdone         TINYINT(1),     -- CALCULE cote applicatif
+    Mouid           INT             NOT NULL,
+    Typid           INT,
+    Comid           INT,
+    Usrid           INT             NOT NULL,
     PRIMARY KEY (Facid),
     UNIQUE (Mouid),
     FOREIGN KEY (Mouid) REFERENCES MOUVEMENT(Mouid),
@@ -66,8 +67,8 @@ CREATE TABLE FACTURE (
 -- -----------------------------------------------------------
 
 CREATE TABLE CATEGORIE (
-    Catid   INT          NOT NULL AUTO_INCREMENT,
-    Catnom  VARCHAR(255) NOT NULL,
+    Catid  INT          NOT NULL AUTO_INCREMENT,
+    Catnom VARCHAR(255) NOT NULL,
     Catplus ENUM('1','-1') NOT NULL,
     PRIMARY KEY (Catid)
 );
@@ -83,7 +84,7 @@ CREATE TABLE HABITUDE (
 );
 
 -- -----------------------------------------------------------
--- 3. HUMEUR  (déclarée avant BILAN qui la référence)
+-- 3. HUMEUR (declaree avant BILAN qui la reference)
 -- -----------------------------------------------------------
 
 CREATE TABLE HUMEUR (
@@ -103,7 +104,7 @@ CREATE TABLE DATE_HUMEUR (
 );
 
 -- -----------------------------------------------------------
--- 2. HABITUDES (suite — BILAN référence HUMEUR)
+-- 2. HABITUDES (suite - BILAN reference HUMEUR)
 -- -----------------------------------------------------------
 
 CREATE TABLE BILAN (
@@ -117,9 +118,9 @@ CREATE TABLE BILAN (
 );
 
 CREATE TABLE HABITUDE_BILAN (
-    Bilid  INT         NOT NULL,
-    Habid  INT         NOT NULL,
-    HBdone TINYINT(1)  NOT NULL,
+    Bilid  INT        NOT NULL,
+    Habid  INT        NOT NULL,
+    HBdone TINYINT(1) NOT NULL,
     PRIMARY KEY (Bilid, Habid),
     FOREIGN KEY (Bilid) REFERENCES BILAN(Bilid),
     FOREIGN KEY (Habid) REFERENCES HABITUDE(Habid)
@@ -130,11 +131,11 @@ CREATE TABLE HABITUDE_BILAN (
 -- -----------------------------------------------------------
 
 CREATE TABLE HYDRATATION (
-    Hydid        INT  NOT NULL AUTO_INCREMENT,
-    Hyddate      DATE NOT NULL,
-    Hydquantite  INT  NOT NULL,
-    Hydobjectif  INT  NOT NULL,
-    Usrid        INT  NOT NULL,
+    Hydid       INT  NOT NULL AUTO_INCREMENT,
+    Hyddate     DATE NOT NULL,
+    Hydquantite INT  NOT NULL,
+    Hydobjectif INT  NOT NULL,
+    Usrid       INT  NOT NULL,
     PRIMARY KEY (Hydid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
@@ -144,13 +145,13 @@ CREATE TABLE HYDRATATION (
 -- -----------------------------------------------------------
 
 CREATE TABLE SOMMEIL (
-    Somid        INT        NOT NULL AUTO_INCREMENT,
-    Somdate      DATE       NOT NULL,
-    Somcoucher   TIME       NOT NULL,
-    Somlever     TIME       NOT NULL,
-    Somduree     INT,                 -- CALCULÉ côté applicatif
-    Somreposant  TINYINT(1),          -- OPTIONNEL
-    Usrid        INT        NOT NULL,
+    Somid      INT        NOT NULL AUTO_INCREMENT,
+    Somdate    DATE       NOT NULL,
+    Somcoucher TIME       NOT NULL,
+    Somlever   TIME       NOT NULL,
+    Somduree   INT,       -- CALCULE cote applicatif
+    Somreposant TINYINT(1), -- OPTIONNEL
+    Usrid      INT        NOT NULL,
     PRIMARY KEY (Somid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
@@ -160,14 +161,14 @@ CREATE TABLE SOMMEIL (
 -- -----------------------------------------------------------
 
 CREATE TABLE REPAS (
-    Repid           INT    NOT NULL AUTO_INCREMENT,
-    Repdate         DATE   NOT NULL,
-    Repdescription  TEXT,
-    Repcalories     DOUBLE,
-    Repproteines    DOUBLE,
-    Repglucides     DOUBLE,
-    Replipides      DOUBLE,
-    Usrid           INT    NOT NULL,
+    Repid         INT    NOT NULL AUTO_INCREMENT,
+    Repdate       DATE   NOT NULL,
+    Repdescription TEXT,
+    Repcalories   DOUBLE,
+    Repproteines  DOUBLE,
+    Repglucides   DOUBLE,
+    Replipides    DOUBLE,
+    Usrid         INT    NOT NULL,
     PRIMARY KEY (Repid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
@@ -177,13 +178,13 @@ CREATE TABLE REPAS (
 -- -----------------------------------------------------------
 
 CREATE TABLE MESURE_CORPORELLE (
-    Mesid         INT    NOT NULL AUTO_INCREMENT,
-    Mesdate       DATE   NOT NULL,
-    Mespoids      DOUBLE NOT NULL,
-    Mestaille     DOUBLE,             -- OPTIONNEL
-    MesIMC        DOUBLE,             -- CALCULÉ côté applicatif
-    MesMetaBasal  DOUBLE,             -- CALCULÉ côté applicatif
-    Usrid         INT    NOT NULL,
+    Mesid       INT    NOT NULL AUTO_INCREMENT,
+    Mesdate     DATE   NOT NULL,
+    Mespoids    DOUBLE NOT NULL,
+    Mestaille   DOUBLE,         -- OPTIONNEL
+    MesIMC      DOUBLE,         -- CALCULE cote applicatif
+    MesMetaBasal DOUBLE,        -- CALCULE cote applicatif
+    Usrid       INT    NOT NULL,
     PRIMARY KEY (Mesid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
@@ -199,40 +200,41 @@ CREATE TABLE SPORT_TYPE (
 );
 
 CREATE TABLE SEANCE_SPORT (
-    Seaid         INT    NOT NULL AUTO_INCREMENT,
-    Seadate       DATE   NOT NULL,
-    Stypid        INT,
-    Seaduree      INT    NOT NULL,
-    Seaintensite  ENUM('FAIBLE','MODERE','INTENSE') NOT NULL,
-    Seacalories   DOUBLE,             -- CALCULÉ côté applicatif
-    Usrid         INT    NOT NULL,
+    Seaid      INT                              NOT NULL AUTO_INCREMENT,
+    Seadate    DATE                             NOT NULL,
+    Stypid     INT,
+    Seaduree   INT                              NOT NULL,
+    Seaintensite ENUM('FAIBLE','MODERE','INTENSE') NOT NULL,
+    Seacalories DOUBLE,         -- CALCULE cote applicatif
+    Usrid      INT              NOT NULL,
     PRIMARY KEY (Seaid),
     FOREIGN KEY (Stypid) REFERENCES SPORT_TYPE(Stypid),
-    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
+    FOREIGN KEY (Usrid)  REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
--- 9. SOBRIÉTÉ & ALCOOL
+-- 9. SOBRIETE & ALCOOL
 -- -----------------------------------------------------------
 
 CREATE TABLE SOBRIETE (
     Sobid    INT      NOT NULL AUTO_INCREMENT,
     Sobdebut DATETIME NOT NULL,
-    Sobfin   DATETIME,                -- NULLABLE = en cours
+    Sobfin   DATETIME,          -- NULLABLE = en cours
     Usrid    INT      NOT NULL,
     PRIMARY KEY (Sobid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
 
 CREATE TABLE CONSOMMATION_ALCOOL (
-    Alcid          INT      NOT NULL AUTO_INCREMENT,
-    Alcdateheure   DATETIME NOT NULL,
-    Alcquantite    DOUBLE   NOT NULL,
-    Alcdegre       DOUBLE   NOT NULL,
-    Alcjeun        TINYINT(1) NOT NULL,
-    Alcalcoolemie  DOUBLE,            -- CALCULÉ côté applicatif
-    Alctempsobre   INT,               -- CALCULÉ côté applicatif
-    Usrid          INT      NOT NULL,
+    Alcid        INT          NOT NULL AUTO_INCREMENT,
+    Alcdateheure DATETIME     NOT NULL,
+    Alctype      VARCHAR(100),
+    Alcquantite  DOUBLE       NOT NULL,
+    Alcdegre     DOUBLE       NOT NULL,
+    Alcjeun      TINYINT(1)   NOT NULL,
+    Alcalcoolemie DOUBLE,      -- CALCULE cote applicatif
+    Alctempsobre  INT,         -- CALCULE cote applicatif
+    Usrid        INT          NOT NULL,
     PRIMARY KEY (Alcid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
@@ -248,26 +250,28 @@ CREATE TABLE TODO_TYPE (
 );
 
 CREATE TABLE TODO (
-    Todid    INT          NOT NULL AUTO_INCREMENT,
-    Todtitre VARCHAR(500) NOT NULL,
-    Toddone  TINYINT(1)   NOT NULL,
-    Todtimer INT,                     -- NULLABLE = sans timer
-    Totypid  INT,
-    Usrid    INT          NOT NULL,
+    Todid          INT          NOT NULL AUTO_INCREMENT,
+    Todtitre       VARCHAR(500) NOT NULL,
+    Toddescription TEXT,
+    Toddone        TINYINT(1)   NOT NULL,
+    Todtimer       INT,         -- NULLABLE = sans timer
+    Totypid        INT,
+    Usrid          INT          NOT NULL,
     PRIMARY KEY (Todid),
     FOREIGN KEY (Totypid) REFERENCES TODO_TYPE(Totypid),
-    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
+    FOREIGN KEY (Usrid)   REFERENCES UTILISATEUR(Usrid)
 );
 
 -- -----------------------------------------------------------
--- 11. COHÉRENCE CARDIAQUE
+-- 11. COHERENCE CARDIAQUE
 -- -----------------------------------------------------------
 
 CREATE TABLE COHERENCE_CARDIAQUE (
     Cohid          INT      NOT NULL AUTO_INCREMENT,
     Cohdateheure   DATETIME NOT NULL,
     Cohduree       INT      NOT NULL,
-    Cohparamcercle JSON,               -- OPTIONNEL
+    Cohfrequence   VARCHAR(50),
+    Cohparamcercle JSON,    -- OPTIONNEL
     Usrid          INT      NOT NULL,
     PRIMARY KEY (Cohid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
