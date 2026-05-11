@@ -16,6 +16,7 @@ pub async fn connect_db(cfg: &DbConfig) -> DbPool {
 }
 
 // ===== GLOBAL FUNCTIONS =====
+
 pub async fn get_user_profile(pool: &DbPool, user_id: i32) -> Result<UserProfile, sqlx::Error> {
     sqlx::query_as::<_, UserProfile>(
         r#"
@@ -93,7 +94,7 @@ pub async fn get_latest_module_values(pool: &DbPool, user_id: i32) -> Result<Vec
     sqlx::query_as::<_, LatestModuleValues>(
         r#"
         SELECT 'HYDRATATION' AS module_name, 'water_total' AS metric_name,
-        CAST(h.Hydquantite AS CHAR) AS metric_value, CAST(h.Hyddate AS CHAR) AS metric_date
+               CAST(h.Hydquantite AS CHAR) AS metric_value, CAST(h.Hyddate AS CHAR) AS metric_date
         FROM HYDRATATION h
         WHERE h.Usrid = ?
         ORDER BY h.Hyddate DESC, h.Hydid DESC
@@ -132,32 +133,32 @@ pub async fn get_active_alerts_and_reminders(pool: &DbPool, user_id: i32) -> Res
         SELECT 'FACTURE' AS alert_type, f.Facid AS item_id, f.FacdateProchain AS due_date
         FROM FACTURE f
         WHERE f.Usrid = ?
-        AND f.Facdone = 0
-        AND f.FacdateProchain IS NOT NULL
-        AND f.FacdateProchain <= CURDATE()
+          AND f.Facdone = 0
+          AND f.FacdateProchain IS NOT NULL
+          AND f.FacdateProchain <= CURDATE()
         UNION ALL
         SELECT 'TODO', t.Todid, NULL
         FROM TODO t
         WHERE t.Usrid = ?
-        AND t.Toddone = 0
+          AND t.Toddone = 0
         UNION ALL
         SELECT 'HYDRATATION', h.Hydid, h.Hyddate
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hyddate = CURDATE()
-        AND h.Hydquantite < h.Hydobjectif
+          AND h.Hyddate = CURDATE()
+          AND h.Hydquantite < h.Hydobjectif
         UNION ALL
         SELECT 'SOMMEIL', s.Somid, s.Somdate
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somdate = CURDATE()
-        AND s.Somduree IS NOT NULL
-        AND s.Somduree < 420
+          AND s.Somdate = CURDATE()
+          AND s.Somduree IS NOT NULL
+          AND s.Somduree < 420
         UNION ALL
         SELECT 'DATE_HUMEUR', dh.Usrid, dh.DHdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
-        AND dh.DHdate = CURDATE()
+          AND dh.DHdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -170,6 +171,7 @@ pub async fn get_active_alerts_and_reminders(pool: &DbPool, user_id: i32) -> Res
 }
 
 // ===== FINANCES FUNCTIONS =====
+
 pub async fn get_user_accounts(pool: &DbPool, user_id: i32) -> Result<Vec<Account>, sqlx::Error> {
     sqlx::query_as::<_, Account>(
         r#"
@@ -222,7 +224,7 @@ pub async fn get_transactions_by_period(
                m.Moudate AS moudate, m.Moumontant AS moumontant, m.Moudescription AS moudescription
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
+          AND m.Moudate BETWEEN ? AND ?
         ORDER BY m.Moudate DESC, m.Mouid DESC
         "#,
     )
@@ -244,7 +246,7 @@ pub async fn get_transactions_by_account(
                m.Moudate AS moudate, m.Moumontant AS moumontant, m.Moudescription AS moudescription
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Comid = ?
+          AND m.Comid = ?
         ORDER BY m.Moudate DESC, m.Mouid DESC
         "#,
     )
@@ -265,7 +267,7 @@ pub async fn get_transactions_by_type(
                m.Moudate AS moudate, m.Moumontant AS moumontant, m.Moudescription AS moudescription
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Typid = ?
+          AND m.Typid = ?
         ORDER BY m.Moudate DESC, m.Mouid DESC
         "#,
     )
@@ -286,7 +288,7 @@ pub async fn get_income_total_by_period(
         SELECT COALESCE(SUM(CASE WHEN m.Moumontant > 0 THEN m.Moumontant ELSE 0 END), 0) AS income_total
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
+          AND m.Moudate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -307,7 +309,7 @@ pub async fn get_expense_total_by_period(
         SELECT COALESCE(SUM(CASE WHEN m.Moumontant < 0 THEN ABS(m.Moumontant) ELSE 0 END), 0) AS expense_total
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
+          AND m.Moudate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -328,7 +330,7 @@ pub async fn get_net_balance_by_period(
         SELECT COALESCE(SUM(m.Moumontant), 0) AS net_balance
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
+          AND m.Moudate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -360,8 +362,8 @@ pub async fn get_upcoming_planned_expenses(pool: &DbPool, user_id: i32) -> Resul
                f.Facmontant AS facmontant, f.FacdateProchain AS facdateprochain, f.Facdone AS facdone
         FROM FACTURE f
         WHERE f.Usrid = ?
-        AND f.FacdateProchain IS NOT NULL
-        AND f.FacdateProchain >= CURDATE()
+          AND f.FacdateProchain IS NOT NULL
+          AND f.FacdateProchain >= CURDATE()
         ORDER BY f.FacdateProchain ASC
         "#,
     )
@@ -379,13 +381,13 @@ pub async fn get_top_expense_types(
 ) -> Result<Vec<TopExpenseType>, sqlx::Error> {
     sqlx::query_as::<_, TopExpenseType>(
         r#"
-        SELECT t.Typid AS typid, t.Typtitre AS typtitre, 
+        SELECT t.Typid AS typid, t.Typtitre AS typtitre,
                COALESCE(SUM(ABS(m.Moumontant)), 0) AS total_expense
         FROM MOUVEMENT m
         JOIN TYPE t ON t.Typid = m.Typid
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
-        AND m.Moumontant < 0
+          AND m.Moudate BETWEEN ? AND ?
+          AND m.Moumontant < 0
         GROUP BY t.Typid, t.Typtitre
         ORDER BY total_expense DESC
         LIMIT ?
@@ -410,7 +412,7 @@ pub async fn get_balance_history(
         SELECT m.Moudate AS moudate, SUM(m.Moumontant) OVER (ORDER BY m.Moudate, m.Mouid) AS running_balance
         FROM MOUVEMENT m
         WHERE m.Usrid = ?
-        AND m.Moudate BETWEEN ? AND ?
+          AND m.Moudate BETWEEN ? AND ?
         ORDER BY m.Moudate ASC, m.Mouid ASC
         "#,
     )
@@ -422,6 +424,7 @@ pub async fn get_balance_history(
 }
 
 // ===== HABITS FUNCTIONS =====
+
 pub async fn get_habit_categories(pool: &DbPool) -> Result<Vec<HabitCategory>, sqlx::Error> {
     sqlx::query_as::<_, HabitCategory>(
         r#"
@@ -455,7 +458,7 @@ pub async fn get_positive_habits(pool: &DbPool, user_id: i32) -> Result<Vec<Habi
         FROM HABITUDE h
         JOIN CATEGORIE c ON c.Catid = h.Catid
         WHERE h.Usrid = ?
-        AND c.Catplus = '1'
+          AND c.Catplus = '1'
         ORDER BY h.Habnom ASC
         "#,
     )
@@ -471,7 +474,7 @@ pub async fn get_negative_habits(pool: &DbPool, user_id: i32) -> Result<Vec<Habi
         FROM HABITUDE h
         JOIN CATEGORIE c ON c.Catid = h.Catid
         WHERE h.Usrid = ?
-        AND c.Catplus = '-1'
+          AND c.Catplus = '-1'
         ORDER BY h.Habnom ASC
         "#,
     )
@@ -483,7 +486,7 @@ pub async fn get_negative_habits(pool: &DbPool, user_id: i32) -> Result<Vec<Habi
 pub async fn get_today_habits(pool: &DbPool, user_id: i32) -> Result<Vec<TodayHabit>, sqlx::Error> {
     sqlx::query_as::<_, TodayHabit>(
         r#"
-        SELECT h.Habid AS habid, h.Habnom AS habnom, c.Catnom AS catnom, c.Catplus AS catplus, 
+        SELECT h.Habid AS habid, h.Habnom AS habnom, c.Catnom AS catnom, c.Catplus AS catplus,
                COALESCE(hb.HBdone, 0) AS done_today
         FROM HABITUDE h
         LEFT JOIN CATEGORIE c ON c.Catid = h.Catid
@@ -507,7 +510,7 @@ pub async fn get_completed_habits_today(pool: &DbPool, user_id: i32) -> Result<V
         JOIN BILAN b ON b.Usrid = h.Usrid AND b.Bildate = CURDATE()
         JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid AND hb.Habid = h.Habid
         WHERE h.Usrid = ?
-        AND hb.HBdone = 1
+          AND hb.HBdone = 1
         ORDER BY h.Habnom ASC
         "#,
     )
@@ -525,7 +528,7 @@ pub async fn get_pending_habits_today(pool: &DbPool, user_id: i32) -> Result<Vec
         LEFT JOIN BILAN b ON b.Usrid = h.Usrid AND b.Bildate = CURDATE()
         LEFT JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid AND hb.Habid = h.Habid
         WHERE h.Usrid = ?
-        AND COALESCE(hb.HBdone, 0) = 0
+          AND COALESCE(hb.HBdone, 0) = 0
         ORDER BY h.Habnom ASC
         "#,
     )
@@ -538,9 +541,9 @@ pub async fn get_today_habit_summary(pool: &DbPool, user_id: i32) -> Result<Habi
     sqlx::query_as::<_, HabitSummary>(
         r#"
         SELECT
-        COUNT(*) AS total_habits,
-        COALESCE(SUM(CASE WHEN COALESCE(hb.HBdone, 0) = 1 THEN 1 ELSE 0 END), 0) AS completed_habits,
-        COALESCE(SUM(CASE WHEN COALESCE(hb.HBdone, 0) = 0 THEN 1 ELSE 0 END), 0) AS pending_habits
+            COUNT(*) AS total_habits,
+            COALESCE(SUM(CASE WHEN COALESCE(hb.HBdone, 0) = 1 THEN 1 ELSE 0 END), 0) AS completed_habits,
+            COALESCE(SUM(CASE WHEN COALESCE(hb.HBdone, 0) = 0 THEN 1 ELSE 0 END), 0) AS pending_habits
         FROM HABITUDE h
         LEFT JOIN BILAN b ON b.Usrid = h.Usrid AND b.Bildate = CURDATE()
         LEFT JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid AND hb.Habid = h.Habid
@@ -556,11 +559,11 @@ pub async fn get_today_habit_score(pool: &DbPool, user_id: i32) -> Result<HabitS
     sqlx::query_as::<_, HabitScore>(
         r#"
         SELECT
-        COALESCE(SUM(CASE
-            WHEN c.Catplus = '1' AND COALESCE(hb.HBdone, 0) = 1 THEN 1
-            WHEN c.Catplus = '-1' AND COALESCE(hb.HBdone, 0) = 0 THEN 1
-            ELSE 0
-        END), 0) AS habit_score
+            COALESCE(SUM(CASE
+                WHEN c.Catplus = '1' AND COALESCE(hb.HBdone, 0) = 1 THEN 1
+                WHEN c.Catplus = '-1' AND COALESCE(hb.HBdone, 0) = 0 THEN 1
+                ELSE 0
+            END), 0) AS habit_score
         FROM HABITUDE h
         LEFT JOIN CATEGORIE c ON c.Catid = h.Catid
         LEFT JOIN BILAN b ON b.Usrid = h.Usrid AND b.Bildate = CURDATE()
@@ -577,18 +580,18 @@ pub async fn get_weekly_habit_score(pool: &DbPool, user_id: i32) -> Result<Vec<W
     sqlx::query_as::<_, WeeklyHabitScore>(
         r#"
         SELECT
-        b.Bildate AS bildate,
-        COALESCE(SUM(CASE
-            WHEN c.Catplus = '1' AND hb.HBdone = 1 THEN 1
-            WHEN c.Catplus = '-1' AND hb.HBdone = 0 THEN 1
-            ELSE 0
-        END), 0) AS habit_score
+            b.Bildate AS bildate,
+            COALESCE(SUM(CASE
+                WHEN c.Catplus = '1' AND hb.HBdone = 1 THEN 1
+                WHEN c.Catplus = '-1' AND hb.HBdone = 0 THEN 1
+                ELSE 0
+            END), 0) AS habit_score
         FROM BILAN b
         JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid
         JOIN HABITUDE h ON h.Habid = hb.Habid
         LEFT JOIN CATEGORIE c ON c.Catid = h.Catid
         WHERE b.Usrid = ?
-        AND b.Bildate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+          AND b.Bildate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
         GROUP BY b.Bildate
         ORDER BY b.Bildate ASC
         "#,
@@ -605,7 +608,7 @@ pub async fn get_habit_history(pool: &DbPool, user_id: i32, habit_id: i32) -> Re
         FROM BILAN b
         JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid
         WHERE b.Usrid = ?
-        AND hb.Habid = ?
+          AND hb.Habid = ?
         ORDER BY b.Bildate DESC
         "#,
     )
@@ -619,11 +622,11 @@ pub async fn get_habit_completion_rate(pool: &DbPool, user_id: i32, habit_id: i3
     sqlx::query_as::<_, HabitCompletionRate>(
         r#"
         SELECT
-        COALESCE(AVG(hb.HBdone) * 100, 0) AS completion_rate
+            COALESCE(AVG(hb.HBdone) * 100, 0) AS completion_rate
         FROM BILAN b
         JOIN HABITUDE_BILAN hb ON hb.Bilid = b.Bilid
         WHERE b.Usrid = ?
-        AND hb.Habid = ?
+          AND hb.Habid = ?
         "#,
     )
     .bind(user_id)
@@ -639,7 +642,7 @@ pub async fn get_most_consistent_habits(
 ) -> Result<Vec<HabitConsistency>, sqlx::Error> {
     sqlx::query_as::<_, HabitConsistency>(
         r#"
-        SELECT h.Habid AS habid, h.Habnom AS habnom, 
+        SELECT h.Habid AS habid, h.Habnom AS habnom,
                COALESCE(AVG(hb.HBdone) * 100, 0) AS consistency_rate
         FROM HABITUDE h
         LEFT JOIN HABITUDE_BILAN hb ON hb.Habid = h.Habid
@@ -662,7 +665,7 @@ pub async fn get_least_consistent_habits(
 ) -> Result<Vec<HabitConsistency>, sqlx::Error> {
     sqlx::query_as::<_, HabitConsistency>(
         r#"
-        SELECT h.Habid AS habid, h.Habnom AS habnom, 
+        SELECT h.Habid AS habid, h.Habnom AS habnom,
                COALESCE(AVG(hb.HBdone) * 100, 0) AS consistency_rate
         FROM HABITUDE h
         LEFT JOIN HABITUDE_BILAN hb ON hb.Habid = h.Habid
@@ -679,13 +682,14 @@ pub async fn get_least_consistent_habits(
 }
 
 // ===== SOBRIETY FUNCTIONS =====
+
 pub async fn get_current_sobriety_period(pool: &DbPool, user_id: i32) -> Result<Option<SobrietyPeriod>, sqlx::Error> {
     sqlx::query_as::<_, SobrietyPeriod>(
         r#"
         SELECT s.Sobid AS sobid, s.Usrid AS usrid, s.Sobdebut AS sobdebut, s.Sobfin AS sobfin
         FROM SOBRIETE s
         WHERE s.Usrid = ?
-        AND s.Sobfin IS NULL
+          AND s.Sobfin IS NULL
         ORDER BY s.Sobdebut DESC
         LIMIT 1
         "#,
@@ -701,7 +705,7 @@ pub async fn get_current_sobriety_duration(pool: &DbPool, user_id: i32) -> Resul
         SELECT TIMESTAMPDIFF(HOUR, s.Sobdebut, NOW()) AS sobriety_hours
         FROM SOBRIETE s
         WHERE s.Usrid = ?
-        AND s.Sobfin IS NULL
+          AND s.Sobfin IS NULL
         ORDER BY s.Sobdebut DESC
         LIMIT 1
         "#,
@@ -746,11 +750,11 @@ pub async fn get_sobriety_stats_by_period(
     sqlx::query_as::<_, SobrietyStats>(
         r#"
         SELECT
-        COUNT(*) AS sobriety_period_count,
-        COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.Sobdebut, COALESCE(s.Sobfin, NOW()))), 0) AS sobriety_hours
+            COUNT(*) AS sobriety_period_count,
+            COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.Sobdebut, COALESCE(s.Sobfin, NOW()))), 0) AS sobriety_hours
         FROM SOBRIETE s
         WHERE s.Usrid = ?
-        AND s.Sobdebut >= DATE_SUB(NOW(), INTERVAL ? DAY)
+          AND s.Sobdebut >= DATE_SUB(NOW(), INTERVAL ? DAY)
         "#,
     )
     .bind(user_id)
@@ -760,6 +764,7 @@ pub async fn get_sobriety_stats_by_period(
 }
 
 // ===== MOOD FUNCTIONS =====
+
 pub async fn get_mood_types(pool: &DbPool) -> Result<Vec<MoodType>, sqlx::Error> {
     sqlx::query_as::<_, MoodType>(
         r#"
@@ -778,7 +783,7 @@ pub async fn get_today_mood(pool: &DbPool, user_id: i32) -> Result<Option<MoodEn
         SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
-        AND dh.DHdate = CURDATE()
+          AND dh.DHdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -792,7 +797,7 @@ pub async fn get_mood_by_date(pool: &DbPool, user_id: i32, date: NaiveDate) -> R
         SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
-        AND dh.DHdate = ?
+          AND dh.DHdate = ?
         "#,
     )
     .bind(user_id)
@@ -812,7 +817,7 @@ pub async fn get_monthly_moods(
         SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
-        AND dh.DHdate BETWEEN ? AND ?
+          AND dh.DHdate BETWEEN ? AND ?
         ORDER BY dh.DHdate ASC
         "#,
     )
@@ -852,7 +857,7 @@ pub async fn get_mood_distribution_by_period(
         FROM DATE_HUMEUR dh
         JOIN HUMEUR h ON h.Humid = dh.Humid
         WHERE dh.Usrid = ?
-        AND dh.DHdate BETWEEN ? AND ?
+          AND dh.DHdate BETWEEN ? AND ?
         GROUP BY h.Humid, h.Humnom
         ORDER BY mood_count DESC
         "#,
@@ -865,14 +870,15 @@ pub async fn get_mood_distribution_by_period(
 }
 
 // ===== HYDRATION FUNCTIONS =====
+
 pub async fn get_today_hydration(pool: &DbPool, user_id: i32) -> Result<Vec<HydrationEntry>, sqlx::Error> {
     sqlx::query_as::<_, HydrationEntry>(
         r#"
-        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate, 
+        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate,
                h.Hydquantite AS hydquantite, h.Hydobjectif AS hydobjectif
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hyddate = CURDATE()
+          AND h.Hyddate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -883,11 +889,11 @@ pub async fn get_today_hydration(pool: &DbPool, user_id: i32) -> Result<Vec<Hydr
 pub async fn get_today_hydration_goal(pool: &DbPool, user_id: i32) -> Result<Option<HydrationEntry>, sqlx::Error> {
     sqlx::query_as::<_, HydrationEntry>(
         r#"
-        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate, 
+        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate,
                h.Hydquantite AS hydquantite, h.Hydobjectif AS hydobjectif
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hyddate = CURDATE()
+          AND h.Hyddate = CURDATE()
         ORDER BY h.Hydid DESC
         LIMIT 1
         "#,
@@ -900,7 +906,7 @@ pub async fn get_today_hydration_goal(pool: &DbPool, user_id: i32) -> Result<Opt
 pub async fn get_hydration_history(pool: &DbPool, user_id: i32) -> Result<Vec<HydrationEntry>, sqlx::Error> {
     sqlx::query_as::<_, HydrationEntry>(
         r#"
-        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate, 
+        SELECT h.Hydid AS hydid, h.Usrid AS usrid, h.Hyddate AS hyddate,
                h.Hydquantite AS hydquantite, h.Hydobjectif AS hydobjectif
         FROM HYDRATATION h
         WHERE h.Usrid = ?
@@ -918,7 +924,7 @@ pub async fn get_today_water_total(pool: &DbPool, user_id: i32) -> Result<WaterT
         SELECT COALESCE(SUM(h.Hydquantite), 0) AS water_total
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hyddate = CURDATE()
+          AND h.Hyddate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -930,10 +936,10 @@ pub async fn get_hydration_goal_progress(pool: &DbPool, user_id: i32) -> Result<
     sqlx::query_as::<_, HydrationGoalProgress>(
         r#"
         SELECT
-        CASE
-            WHEN goal.goal_value = 0 THEN 0
-            ELSE ROUND((today.today_value / goal.goal_value) * 100, 2)
-        END AS goal_progress_percent
+            CASE
+                WHEN goal.goal_value = 0 THEN 0
+                ELSE ROUND((today.today_value / goal.goal_value) * 100, 2)
+            END AS goal_progress_percent
         FROM (
             SELECT COALESCE(SUM(h.Hydquantite), 0) AS today_value
             FROM HYDRATATION h
@@ -958,7 +964,7 @@ pub async fn get_hydration_goal_reached_days(pool: &DbPool, user_id: i32) -> Res
         SELECT h.Hyddate AS hyddate, h.Hydobjectif AS hydobjectif
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hydquantite >= h.Hydobjectif
+          AND h.Hydquantite >= h.Hydobjectif
         ORDER BY h.Hyddate DESC
         "#,
     )
@@ -973,7 +979,7 @@ pub async fn get_hydration_goal_missed_days(pool: &DbPool, user_id: i32) -> Resu
         SELECT h.Hyddate AS hyddate, h.Hydobjectif AS hydobjectif
         FROM HYDRATATION h
         WHERE h.Usrid = ?
-        AND h.Hydquantite < h.Hydobjectif
+          AND h.Hydquantite < h.Hydobjectif
         ORDER BY h.Hyddate DESC
         "#,
     )
@@ -990,7 +996,7 @@ pub async fn get_weekly_hydration_average(pool: &DbPool, user_id: i32) -> Result
             SELECT h.Hyddate, SUM(h.Hydquantite) AS day_total
             FROM HYDRATATION h
             WHERE h.Usrid = ?
-            AND h.Hyddate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+              AND h.Hyddate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
             GROUP BY h.Hyddate
         ) AS daily
         "#,
@@ -1008,7 +1014,7 @@ pub async fn get_monthly_hydration_average(pool: &DbPool, user_id: i32) -> Resul
             SELECT h.Hyddate, SUM(h.Hydquantite) AS day_total
             FROM HYDRATATION h
             WHERE h.Usrid = ?
-            AND h.Hyddate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
+              AND h.Hyddate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
             GROUP BY h.Hyddate
         ) AS daily
         "#,
@@ -1033,11 +1039,12 @@ pub async fn get_hydration_goal_history(pool: &DbPool, user_id: i32) -> Result<V
 }
 
 // ===== SLEEP FUNCTIONS =====
+
 pub async fn get_latest_sleep_entry(pool: &DbPool, user_id: i32) -> Result<Option<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
@@ -1053,12 +1060,12 @@ pub async fn get_latest_sleep_entry(pool: &DbPool, user_id: i32) -> Result<Optio
 pub async fn get_today_sleep(pool: &DbPool, user_id: i32) -> Result<Option<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somdate = CURDATE()
+          AND s.Somdate = CURDATE()
         ORDER BY s.Somid DESC
         LIMIT 1
         "#,
@@ -1071,8 +1078,8 @@ pub async fn get_today_sleep(pool: &DbPool, user_id: i32) -> Result<Option<Sleep
 pub async fn get_sleep_history(pool: &DbPool, user_id: i32) -> Result<Vec<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
@@ -1087,12 +1094,12 @@ pub async fn get_sleep_history(pool: &DbPool, user_id: i32) -> Result<Vec<SleepE
 pub async fn get_restful_sleep_entries(pool: &DbPool, user_id: i32) -> Result<Vec<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somreposant = 1
+          AND s.Somreposant = 1
         ORDER BY s.Somdate DESC
         "#,
     )
@@ -1104,12 +1111,12 @@ pub async fn get_restful_sleep_entries(pool: &DbPool, user_id: i32) -> Result<Ve
 pub async fn get_non_restful_sleep_entries(pool: &DbPool, user_id: i32) -> Result<Vec<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somreposant = 0
+          AND s.Somreposant = 0
         ORDER BY s.Somdate DESC
         "#,
     )
@@ -1124,7 +1131,7 @@ pub async fn get_weekly_sleep_average(pool: &DbPool, user_id: i32) -> Result<Ave
         SELECT ROUND(AVG(s.Somduree), 2) AS weekly_sleep_average
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+          AND s.Somdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1138,7 +1145,7 @@ pub async fn get_monthly_sleep_average(pool: &DbPool, user_id: i32) -> Result<Av
         SELECT ROUND(AVG(s.Somduree), 2) AS weekly_sleep_average
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND s.Somdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
+          AND s.Somdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1149,12 +1156,12 @@ pub async fn get_monthly_sleep_average(pool: &DbPool, user_id: i32) -> Result<Av
 pub async fn get_short_sleep_entries(pool: &DbPool, user_id: i32, min_duration: i32) -> Result<Vec<SleepEntry>, sqlx::Error> {
     sqlx::query_as::<_, SleepEntry>(
         r#"
-        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate, 
-               s.Somcoucher AS somcoucher, s.Somlever AS somlever, 
+        SELECT s.Somid AS somid, s.Usrid AS usrid, s.Somdate AS somdate,
+               s.Somcoucher AS somcoucher, s.Somlever AS somlever,
                s.Somduree AS somduree, s.Somreposant AS somreposant
         FROM SOMMEIL s
         WHERE s.Usrid = ?
-        AND COALESCE(s.Somduree, TIMESTAMPDIFF(MINUTE, s.Somcoucher, s.Somlever)) < ?
+          AND COALESCE(s.Somduree, TIMESTAMPDIFF(MINUTE, s.Somcoucher, s.Somlever)) < ?
         ORDER BY s.Somdate DESC
         "#,
     )
@@ -1165,15 +1172,16 @@ pub async fn get_short_sleep_entries(pool: &DbPool, user_id: i32, min_duration: 
 }
 
 // ===== NUTRITION FUNCTIONS =====
+
 pub async fn get_today_meals(pool: &DbPool, user_id: i32) -> Result<Vec<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate, 
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines, 
+        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
                r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         ORDER BY r.Repid DESC
         "#,
     )
@@ -1190,12 +1198,12 @@ pub async fn get_meals_by_period(
 ) -> Result<Vec<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate, 
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines, 
+        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
                r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate BETWEEN ? AND ?
+          AND r.Repdate BETWEEN ? AND ?
         ORDER BY r.Repdate ASC, r.Repid ASC
         "#,
     )
@@ -1209,8 +1217,8 @@ pub async fn get_meals_by_period(
 pub async fn get_latest_meal(pool: &DbPool, user_id: i32) -> Result<Option<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate, 
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines, 
+        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
                r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
@@ -1229,7 +1237,7 @@ pub async fn get_today_calorie_total(pool: &DbPool, user_id: i32) -> Result<Calo
         SELECT COALESCE(SUM(r.Repcalories), 0) AS calorie_total
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1243,7 +1251,7 @@ pub async fn get_today_protein_total(pool: &DbPool, user_id: i32) -> Result<Prot
         SELECT COALESCE(SUM(r.Repproteines), 0) AS protein_total
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1257,7 +1265,7 @@ pub async fn get_today_carb_total(pool: &DbPool, user_id: i32) -> Result<Calorie
         SELECT COALESCE(SUM(r.Repglucides), 0) AS calorie_total
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1271,7 +1279,7 @@ pub async fn get_today_fat_total(pool: &DbPool, user_id: i32) -> Result<CalorieT
         SELECT COALESCE(SUM(r.Replipides), 0) AS calorie_total
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1283,12 +1291,12 @@ pub async fn get_daily_macro_distribution(pool: &DbPool, user_id: i32) -> Result
     sqlx::query_as::<_, MacroDistribution>(
         r#"
         SELECT
-        COALESCE(SUM(r.Repproteines), 0) AS proteins,
-        COALESCE(SUM(r.Repglucides), 0) AS carbs,
-        COALESCE(SUM(r.Replipides), 0) AS fats
+            COALESCE(SUM(r.Repproteines), 0) AS proteins,
+            COALESCE(SUM(r.Repglucides), 0) AS carbs,
+            COALESCE(SUM(r.Replipides), 0) AS fats
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate = CURDATE()
+          AND r.Repdate = CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1305,13 +1313,13 @@ pub async fn get_nutrition_history(
     sqlx::query_as::<_, NutritionHistory>(
         r#"
         SELECT r.Repdate AS repdate,
-        COALESCE(SUM(r.Repcalories), 0) AS calories,
-        COALESCE(SUM(r.Repproteines), 0) AS proteins,
-        COALESCE(SUM(r.Repglucides), 0) AS carbs,
-        COALESCE(SUM(r.Replipides), 0) AS fats
+               COALESCE(SUM(r.Repcalories), 0) AS calories,
+               COALESCE(SUM(r.Repproteines), 0) AS proteins,
+               COALESCE(SUM(r.Repglucides), 0) AS carbs,
+               COALESCE(SUM(r.Replipides), 0) AS fats
         FROM REPAS r
         WHERE r.Usrid = ?
-        AND r.Repdate BETWEEN ? AND ?
+          AND r.Repdate BETWEEN ? AND ?
         GROUP BY r.Repdate
         ORDER BY r.Repdate ASC
         "#,
@@ -1331,7 +1339,7 @@ pub async fn get_weekly_calorie_average(pool: &DbPool, user_id: i32) -> Result<A
             SELECT r.Repdate, COALESCE(SUM(r.Repcalories), 0) AS day_calories
             FROM REPAS r
             WHERE r.Usrid = ?
-            AND r.Repdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+              AND r.Repdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
             GROUP BY r.Repdate
         ) AS daily
         "#,
@@ -1349,7 +1357,7 @@ pub async fn get_monthly_calorie_average(pool: &DbPool, user_id: i32) -> Result<
             SELECT r.Repdate, COALESCE(SUM(r.Repcalories), 0) AS day_calories
             FROM REPAS r
             WHERE r.Usrid = ?
-            AND r.Repdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
+              AND r.Repdate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
             GROUP BY r.Repdate
         ) AS daily
         "#,
@@ -1360,11 +1368,12 @@ pub async fn get_monthly_calorie_average(pool: &DbPool, user_id: i32) -> Result<
 }
 
 // ===== BODY MEASUREMENT FUNCTIONS =====
+
 pub async fn get_latest_body_measurement(pool: &DbPool, user_id: i32) -> Result<Option<BodyMeasurement>, sqlx::Error> {
     sqlx::query_as::<_, BodyMeasurement>(
         r#"
-        SELECT m.Mesid AS mesid, m.Usrid AS usrid, m.Mesdate AS mesdate, 
-               m.Mespoids AS mespoids, m.Mestaille AS mestaille, 
+        SELECT m.Mesid AS mesid, m.Usrid AS usrid, m.Mesdate AS mesdate,
+               m.Mespoids AS mespoids, m.Mestaille AS mestaille,
                m.MesIMC AS mesIMC, m.MesMetaBasal AS mesMetaBasal
         FROM MESURE_CORPORELLE m
         WHERE m.Usrid = ?
@@ -1402,7 +1411,7 @@ pub async fn get_weight_chart_data(
         SELECT m.Mesdate AS mesdate, m.Mespoids AS mespoids
         FROM MESURE_CORPORELLE m
         WHERE m.Usrid = ?
-        AND m.Mesdate BETWEEN ? AND ?
+          AND m.Mesdate BETWEEN ? AND ?
         ORDER BY m.Mesdate ASC
         "#,
     )
@@ -1417,9 +1426,9 @@ pub async fn get_weight_progress(pool: &DbPool, user_id: i32) -> Result<Option<W
     sqlx::query_as::<_, WeightProgress>(
         r#"
         SELECT
-        first_weight,
-        last_weight,
-        last_weight - first_weight AS weight_delta
+            first_weight,
+            last_weight,
+            last_weight - first_weight AS weight_delta
         FROM (
             SELECT
                 (SELECT m.Mespoids FROM MESURE_CORPORELLE m WHERE m.Usrid = ? ORDER BY m.Mesdate ASC, m.Mesid ASC LIMIT 1) AS first_weight,
@@ -1452,10 +1461,10 @@ pub async fn get_health_derived_metrics(pool: &DbPool, user_id: i32) -> Result<O
     sqlx::query_as::<_, HealthMetrics>(
         r#"
         SELECT
-        latest.Mespoids AS latest_weight,
-        latest.Mestaille AS latest_height,
-        latest.MesIMC AS latest_bmi,
-        latest.MesMetaBasal AS latest_basal_metabolism
+            latest.Mespoids AS latest_weight,
+            latest.Mestaille AS latest_height,
+            latest.MesIMC AS latest_bmi,
+            latest.MesMetaBasal AS latest_basal_metabolism
         FROM MESURE_CORPORELLE latest
         WHERE latest.Usrid = ?
         ORDER BY latest.Mesdate DESC, latest.Mesid DESC
@@ -1468,6 +1477,7 @@ pub async fn get_health_derived_metrics(pool: &DbPool, user_id: i32) -> Result<O
 }
 
 // ===== SPORT FUNCTIONS =====
+
 pub async fn get_sport_types(pool: &DbPool) -> Result<Vec<SportType>, sqlx::Error> {
     sqlx::query_as::<_, SportType>(
         r#"
@@ -1483,11 +1493,11 @@ pub async fn get_sport_types(pool: &DbPool) -> Result<Vec<SportType>, sqlx::Erro
 pub async fn get_today_sport_sessions(pool: &DbPool, user_id: i32) -> Result<Vec<SportSession>, sqlx::Error> {
     sqlx::query_as::<_, SportSession>(
         r#"
-        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate, 
+        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate,
                s.Seaduree AS seaduree, s.Seacalories AS seacalories, s.Seaintensite AS seaintensite
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate = CURDATE()
+          AND s.Seadate = CURDATE()
         ORDER BY s.Seaid DESC
         "#,
     )
@@ -1504,11 +1514,11 @@ pub async fn get_sport_sessions_by_period(
 ) -> Result<Vec<SportSession>, sqlx::Error> {
     sqlx::query_as::<_, SportSession>(
         r#"
-        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate, 
+        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate,
                s.Seaduree AS seaduree, s.Seacalories AS seacalories, s.Seaintensite AS seaintensite
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN ? AND ?
+          AND s.Seadate BETWEEN ? AND ?
         ORDER BY s.Seadate ASC, s.Seaid ASC
         "#,
     )
@@ -1522,7 +1532,7 @@ pub async fn get_sport_sessions_by_period(
 pub async fn get_latest_sport_session(pool: &DbPool, user_id: i32) -> Result<Option<SportSession>, sqlx::Error> {
     sqlx::query_as::<_, SportSession>(
         r#"
-        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate, 
+        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate,
                s.Seaduree AS seaduree, s.Seacalories AS seacalories, s.Seaintensite AS seaintensite
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
@@ -1546,7 +1556,7 @@ pub async fn get_total_sport_duration_by_period(
         SELECT COALESCE(SUM(s.Seaduree), 0) AS sport_duration_total
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN ? AND ?
+          AND s.Seadate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -1555,6 +1565,8 @@ pub async fn get_total_sport_duration_by_period(
     .fetch_one(pool)
     .await
 }
+
+// ===== SPORT FUNCTIONS =====
 
 pub async fn get_sport_session_count_by_period(
     pool: &DbPool,
@@ -1567,7 +1579,7 @@ pub async fn get_sport_session_count_by_period(
         SELECT COUNT(*) AS sport_session_count
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN ? AND ?
+          AND s.Seadate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -1588,7 +1600,7 @@ pub async fn get_burned_calories_by_period(
         SELECT COALESCE(SUM(s.Seacalories), 0) AS burned_calories
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN ? AND ?
+          AND s.Seadate BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -1605,11 +1617,11 @@ pub async fn get_sport_sessions_by_type(
 ) -> Result<Vec<SportSession>, sqlx::Error> {
     sqlx::query_as::<_, SportSession>(
         r#"
-        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate, 
+        SELECT s.Seaid AS seaid, s.Usrid AS usrid, s.Stypid AS stypid, s.Seadate AS seadate,
                s.Seaduree AS seaduree, s.Seacalories AS seacalories, s.Seaintensite AS seaintensite
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Stypid = ?
+          AND s.Stypid = ?
         ORDER BY s.Seadate DESC, s.Seaid DESC
         "#,
     )
@@ -1640,12 +1652,12 @@ pub async fn get_weekly_sport_stats(pool: &DbPool, user_id: i32) -> Result<Sport
     sqlx::query_as::<_, SportStats>(
         r#"
         SELECT
-        COUNT(*) AS session_count,
-        COALESCE(SUM(s.Seaduree), 0) AS total_duration,
-        COALESCE(SUM(s.Seacalories), 0) AS total_calories
+            COUNT(*) AS session_count,
+            COALESCE(SUM(s.Seaduree), 0) AS total_duration,
+            COALESCE(SUM(s.Seacalories), 0) AS total_calories
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
+          AND s.Seadate BETWEEN DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1657,12 +1669,12 @@ pub async fn get_monthly_sport_stats(pool: &DbPool, user_id: i32) -> Result<Spor
     sqlx::query_as::<_, SportStats>(
         r#"
         SELECT
-        COUNT(*) AS session_count,
-        COALESCE(SUM(s.Seaduree), 0) AS total_duration,
-        COALESCE(SUM(s.Seacalories), 0) AS total_calories
+            COUNT(*) AS session_count,
+            COALESCE(SUM(s.Seaduree), 0) AS total_duration,
+            COALESCE(SUM(s.Seacalories), 0) AS total_calories
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
+          AND s.Seadate BETWEEN DATE_SUB(CURDATE(), INTERVAL 29 DAY) AND CURDATE()
         "#,
     )
     .bind(user_id)
@@ -1678,11 +1690,12 @@ pub async fn get_sport_chart_data(
 ) -> Result<Vec<SportChartData>, sqlx::Error> {
     sqlx::query_as::<_, SportChartData>(
         r#"
-        SELECT s.Seadate AS seadate, COALESCE(SUM(s.Seaduree), 0) AS duration, 
+        SELECT s.Seadate AS seadate,
+               COALESCE(SUM(s.Seaduree), 0) AS duration,
                COALESCE(SUM(s.Seacalories), 0) AS calories
         FROM SEANCE_SPORT s
         WHERE s.Usrid = ?
-        AND s.Seadate BETWEEN ? AND ?
+          AND s.Seadate BETWEEN ? AND ?
         GROUP BY s.Seadate
         ORDER BY s.Seadate ASC
         "#,
@@ -1695,6 +1708,7 @@ pub async fn get_sport_chart_data(
 }
 
 // ===== BREATHING/COHERENCE FUNCTIONS =====
+
 pub async fn get_latest_breathing_session(pool: &DbPool, user_id: i32) -> Result<Option<BreathingSession>, sqlx::Error> {
     sqlx::query_as::<_, BreathingSession>(
         r#"
@@ -1716,7 +1730,7 @@ pub async fn get_today_breathing_sessions(pool: &DbPool, user_id: i32) -> Result
         SELECT c.Cohid AS cohid, c.Usrid AS usrid, c.Cohdateheure AS cohdateheure, c.Cohduree AS cohduree
         FROM COHERENCE_CARDIAQUE c
         WHERE c.Usrid = ?
-        AND DATE(c.Cohdateheure) = CURDATE()
+          AND DATE(c.Cohdateheure) = CURDATE()
         ORDER BY c.Cohdateheure DESC, c.Cohid DESC
         "#,
     )
@@ -1736,7 +1750,7 @@ pub async fn get_breathing_sessions_by_period(
         SELECT c.Cohid AS cohid, c.Usrid AS usrid, c.Cohdateheure AS cohdateheure, c.Cohduree AS cohduree
         FROM COHERENCE_CARDIAQUE c
         WHERE c.Usrid = ?
-        AND DATE(c.Cohdateheure) BETWEEN ? AND ?
+          AND DATE(c.Cohdateheure) BETWEEN ? AND ?
         ORDER BY c.Cohdateheure ASC
         "#,
     )
@@ -1758,7 +1772,7 @@ pub async fn get_total_breathing_duration_by_period(
         SELECT COALESCE(SUM(c.Cohduree), 0) AS breathing_duration_total
         FROM COHERENCE_CARDIAQUE c
         WHERE c.Usrid = ?
-        AND DATE(c.Cohdateheure) BETWEEN ? AND ?
+          AND DATE(c.Cohdateheure) BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -1779,7 +1793,7 @@ pub async fn get_breathing_session_count_by_period(
         SELECT COUNT(*) AS breathing_session_count
         FROM COHERENCE_CARDIAQUE c
         WHERE c.Usrid = ?
-        AND DATE(c.Cohdateheure) BETWEEN ? AND ?
+          AND DATE(c.Cohdateheure) BETWEEN ? AND ?
         "#,
     )
     .bind(user_id)
@@ -1803,10 +1817,11 @@ pub async fn get_average_breathing_usage_frequency(pool: &DbPool, user_id: i32) 
 }
 
 // ===== ALCOHOL FUNCTIONS =====
+
 pub async fn get_latest_alcohol_entry(pool: &DbPool, user_id: i32) -> Result<Option<AlcoholEntry>, sqlx::Error> {
     sqlx::query_as::<_, AlcoholEntry>(
         r#"
-        SELECT c.Alcid AS alcid, c.Usrid AS usrid, c.Alcdateheure AS alcdateheure, 
+        SELECT c.Alcid AS alcid, c.Usrid AS usrid, c.Alcdateheure AS alcdateheure,
                c.Alcalcoolemie AS alcalcoolemie, c.Alctempsobre AS alctempsobre
         FROM CONSOMMATION_ALCOOL c
         WHERE c.Usrid = ?
@@ -1827,11 +1842,11 @@ pub async fn get_alcohol_entries_by_period(
 ) -> Result<Vec<AlcoholEntry>, sqlx::Error> {
     sqlx::query_as::<_, AlcoholEntry>(
         r#"
-        SELECT c.Alcid AS alcid, c.Usrid AS usrid, c.Alcdateheure AS alcdateheure, 
+        SELECT c.Alcid AS alcid, c.Usrid AS usrid, c.Alcdateheure AS alcdateheure,
                c.Alcalcoolemie AS alcalcoolemie, c.Alctempsobre AS alctempsobre
         FROM CONSOMMATION_ALCOOL c
         WHERE c.Usrid = ?
-        AND DATE(c.Alcdateheure) BETWEEN ? AND ?
+          AND DATE(c.Alcdateheure) BETWEEN ? AND ?
         ORDER BY c.Alcdateheure ASC, c.Alcid ASC
         "#,
     )
@@ -1872,446 +1887,228 @@ pub async fn get_time_until_sobriety(pool: &DbPool, user_id: i32) -> Result<Opti
     .await
 }
 
-// ===== INSERT FUNCTIONS =====
+use chrono::NaiveDate;
+use sqlx;
+use crate::db::DbPool;
 
-// ===== GLOBAL INSERTS =====
 pub async fn create_user(pool: &DbPool, public_id: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO UTILISATEUR (UsrpublicId, UsrcreatedAt)
-        VALUES (?, NOW())
-        "#,
-    )
-    .bind(public_id)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO UTILISATEUR (UsrpublicId) VALUES (?)"#)
+        .bind(public_id)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== FINANCES INSERTS =====
 pub async fn create_account(pool: &DbPool, user_id: i32, name: &str, balance: f64) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO COMPTE (Usrid, Comnom, Comsolde)
-        VALUES (?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(name)
-    .bind(balance)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO COMPTE (Comnom, Comsolde, Usrid) VALUES (?, ?, ?)"#)
+        .bind(name)
+        .bind(balance)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
 pub async fn create_finance_type(pool: &DbPool, name: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO TYPE (Typtitre)
-        VALUES (?)
-        "#,
-    )
-    .bind(name)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO TYPE (Typtitre) VALUES (?)"#)
+        .bind(name)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-pub async fn create_transaction(
-    pool: &DbPool,
-    user_id: i32,
-    account_id: i32,
-    type_id: i32,
-    amount: f64,
-    description: &str,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO MOUVEMENT (Usrid, Comid, Typid, Moudate, Moumontant, Moudescription)
-        VALUES (?, ?, ?, CURDATE(), ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(account_id)
-    .bind(type_id)
-    .bind(amount)
-    .bind(description)
-    .execute(pool)
-    .await?;
-    
-    Ok(result.last_insert_id() as i32)
+pub async fn create_transaction(pool: &DbPool, user_id: i32, account_id: i32, type_id: i32, amount: f64, description: &str) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO MOUVEMENT (Moumontant, Moudate, Typid, Comid, Usrid) VALUES (?, CURDATE(), ?, ?, ?)"#)
+        .bind(amount)
+        .bind(type_id)
+        .bind(account_id)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let id = result.last_insert_id() as i32;
+    let _ = description;
+    Ok(id)
 }
 
-pub async fn create_planned_expense(
-    pool: &DbPool,
-    user_id: i32,
-    name: &str,
-    amount: f64,
-    next_date: NaiveDate,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO FACTURE (Usrid, Facles, FacdateProchain, Facmontant)
-        VALUES (?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(name)
-    .bind(next_date)
-    .bind(amount)
-    .execute(pool)
-    .await?;
-    
-    Ok(result.last_insert_id() as i32)
+pub async fn create_planned_expense(pool: &DbPool, user_id: i32, name: &str, amount: f64, next_date: NaiveDate) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO FACTURE (Facdate, Facperiodicite, Facintervalle, FacdateProchain, Facdone, Mouid, Typid, Comid, Usrid) VALUES (CURDATE(), 'MOIS', 1, ?, 0, 0, NULL, NULL, ?)"#)
+        .bind(next_date)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let id = result.last_insert_id() as i32;
+    let _ = (name, amount);
+    Ok(id)
 }
 
-// ===== HABITS INSERTS =====
 pub async fn create_habit_category(pool: &DbPool, name: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO CATEGORIE_HABITUDE (Catnom)
-        VALUES (?)
-        "#,
-    )
-    .bind(name)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO CATEGORIE (Catnom, Catplus) VALUES (?, '1')"#)
+        .bind(name)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-pub async fn create_habit(
-    pool: &DbPool,
-    user_id: i32,
-    category_id: i32,
-    title: &str,
-    description: &str,
-    habit_type: &str,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO HABITUDE (Usrid, Catid, Habtitre, Habdescription, Habtype)
-        VALUES (?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(category_id)
-    .bind(title)
-    .bind(description)
-    .bind(habit_type)
-    .execute(pool)
-    .await?;
-    
+pub async fn create_habit(pool: &DbPool, user_id: i32, category_id: i32, title: &str, description: &str, habit_type: &str) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO HABITUDE (Habnom, Catid, Usrid) VALUES (?, ?, ?)"#)
+        .bind(title)
+        .bind(category_id)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = (description, habit_type);
     Ok(result.last_insert_id() as i32)
 }
 
 pub async fn mark_habit_complete(pool: &DbPool, user_id: i32, habit_id: i32, date: NaiveDate) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO JOURNEE_HABITUDE (Usrid, Habid, Jhadate, Jhadone)
-        VALUES (?, ?, ?, 1)
-        "#,
-    )
-    .bind(user_id)
-    .bind(habit_id)
-    .bind(date)
-    .execute(pool)
-    .await?;
-    
+    let bilan = sqlx::query(r#"INSERT INTO BILAN (Bildate, Humid, Usrid) VALUES (?, NULL, ?)"#)
+        .bind(date)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let bilid = bilan.last_insert_id() as i32;
+    let result = sqlx::query(r#"INSERT INTO HABITUDE_BILAN (Bilid, Habid, HBdone) VALUES (?, ?, 1)"#)
+        .bind(bilid)
+        .bind(habit_id)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== SOBRIETY INSERTS =====
 pub async fn create_sobriety_period(pool: &DbPool, user_id: i32, start_date: NaiveDate) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO PERIODE_SOBRIETE (Usrid, Perdatedebut, Perstatus)
-        VALUES (?, ?, 'EN_COURS')
-        "#,
-    )
-    .bind(user_id)
-    .bind(start_date)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO SOBRIETE (Sobdebut, Usrid) VALUES (?, ?)"#)
+        .bind(start_date.and_hms_opt(0, 0, 0).unwrap())
+        .bind(user_id)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== MOOD INSERTS =====
 pub async fn create_mood_type(pool: &DbPool, name: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO TYPE_HUMEUR (Typnom)
-        VALUES (?)
-        "#,
-    )
-    .bind(name)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO HUMEUR (Humnom, Humcolor) VALUES (?, '#808080')"#)
+        .bind(name)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-pub async fn log_mood(
-    pool: &DbPool,
-    user_id: i32,
-    type_id: i32,
-    date: NaiveDate,
-    notes: Option<&str>,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO DATE_HUMEUR (Usrid, DHdate, Typid, DHnotes)
-        VALUES (?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(type_id)
-    .bind(notes)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_mood(pool: &DbPool, user_id: i32, type_id: i32, date: NaiveDate, notes: Option<&str>) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO DATE_HUMEUR (Usrid, DHdate, Humid) VALUES (?, ?, ?)"#)
+        .bind(user_id)
+        .bind(date)
+        .bind(type_id)
+        .execute(pool)
+        .await?;
+    let _ = notes;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== HYDRATION INSERTS =====
-pub async fn log_hydration(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    quantity: f64,
-    hydration_type: &str,
-    objective: f64,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO HYDRATATION (Usrid, Hyddate, Hydquantite, Hydtype, Hydobjectif)
-        VALUES (?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(quantity)
-    .bind(hydration_type)
-    .bind(objective)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_hydration(pool: &DbPool, user_id: i32, date: NaiveDate, quantity: f64, hydration_type: &str, objective: f64) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO HYDRATATION (Hyddate, Hydquantite, Hydobjectif, Usrid) VALUES (?, ?, ?, ?)"#)
+        .bind(date)
+        .bind(quantity)
+        .bind(objective)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = hydration_type;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== SLEEP INSERTS =====
-pub async fn log_sleep(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    time: &str,
-    duration: i32,
-    quality: f64,
-    is_restful: bool,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO SOMMEIL (Usrid, Somdate, Somheure, Somduree, Somqualite, Somrestful)
-        VALUES (?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(time)
-    .bind(duration)
-    .bind(quality)
-    .bind(is_restful as i32)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_sleep(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, duration: i32, quality: f64, is_restful: bool) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO SOMMEIL (Somdate, Somcoucher, Somlever, Somduree, Somreposant, Usrid) VALUES (?, ?, ?, ?, ?, ?)"#)
+        .bind(date)
+        .bind(time)
+        .bind(time)
+        .bind(duration)
+        .bind(is_restful as i32)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = quality;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== NUTRITION INSERTS =====
-pub async fn log_meal(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    time: &str,
-    name: &str,
-    calories: f64,
-    proteins: f64,
-    carbs: f64,
-    fats: f64,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO REPAS (Usrid, Repdate, Repheure, Repnom, Repcalories, Repproteines, Repglucides, Replipides)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(time)
-    .bind(name)
-    .bind(calories)
-    .bind(proteins)
-    .bind(carbs)
-    .bind(fats)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_meal(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, name: &str, calories: f64, proteins: f64, carbs: f64, fats: f64) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO REPAS (Repdate, Repdescription, Repcalories, Repproteines, Repglucides, Replipides, Usrid) VALUES (?, ?, ?, ?, ?, ?, ?)"#)
+        .bind(date)
+        .bind(name)
+        .bind(calories)
+        .bind(proteins)
+        .bind(carbs)
+        .bind(fats)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = time;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== BODY MEASUREMENT INSERTS =====
-pub async fn log_body_measurement(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    weight: f64,
-    height: f64,
-    chest: f64,
-    waist: f64,
-    hips: f64,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO MESURE_CORPS (Usrid, Mesdate, Mespoids, Mestaille, Mestour_poitrine, Mestour_taille, Mestour_hanche)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(weight)
-    .bind(height)
-    .bind(chest)
-    .bind(waist)
-    .bind(hips)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_body_measurement(pool: &DbPool, user_id: i32, date: NaiveDate, weight: f64, height: f64, chest: f64, waist: f64, hips: f64) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO MESURE_CORPORELLE (Mesdate, Mespoids, Mestaille, MesIMC, MesMetaBasal, Usrid) VALUES (?, ?, ?, NULL, NULL, ?)"#)
+        .bind(date)
+        .bind(weight)
+        .bind(height)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = (chest, waist, hips);
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== SPORT INSERTS =====
 pub async fn create_sport_type(pool: &DbPool, name: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO TYPE_SPORT (Typnom)
-        VALUES (?)
-        "#,
-    )
-    .bind(name)
-    .execute(pool)
-    .await?;
-    
+    let result = sqlx::query(r#"INSERT INTO SPORT_TYPE (Stypnom) VALUES (?)"#)
+        .bind(name)
+        .execute(pool)
+        .await?;
     Ok(result.last_insert_id() as i32)
 }
 
-pub async fn log_sport_session(
-    pool: &DbPool,
-    user_id: i32,
-    type_id: i32,
-    date: NaiveDate,
-    time: &str,
-    duration: i32,
-    calories: f64,
-    intensity: &str,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO SEANCE_SPORT (Usrid, Typid, Seadate, Seaheure, Seaduree, Seacalories, Seaintensity)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(type_id)
-    .bind(date)
-    .bind(time)
-    .bind(duration)
-    .bind(calories)
-    .bind(intensity)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_sport_session(pool: &DbPool, user_id: i32, type_id: i32, date: NaiveDate, time: &str, duration: i32, calories: f64, intensity: &str) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO SEANCE_SPORT (Seadate, Stypid, Seaduree, Seaintensite, Seacalories, Usrid) VALUES (?, ?, ?, ?, ?, ?)"#)
+        .bind(date)
+        .bind(type_id)
+        .bind(duration)
+        .bind(intensity)
+        .bind(calories)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = time;
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== BREATHING INSERTS =====
-pub async fn log_breathing_session(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    time: &str,
-    duration: i32,
-    frequency: &str,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO SEANCE_COHERENCE (Usrid, Secdate, Secheure, Secduree, Secfrequence)
-        VALUES (?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(time)
-    .bind(duration)
-    .bind(frequency)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_breathing_session(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, duration: i32, frequency: &str) -> Result<i32, sqlx::Error> {
+    let dt = date.and_hms_opt(0, 0, 0).unwrap();
+    let result = sqlx::query(r#"INSERT INTO COHERENCE_CARDIAQUE (Cohdateheure, Cohduree, Cohparamcercle, Usrid) VALUES (?, ?, NULL, ?)"#)
+        .bind(dt)
+        .bind(duration)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = (time, frequency);
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== ALCOHOL INSERTS =====
-pub async fn log_alcohol_consumption(
-    pool: &DbPool,
-    user_id: i32,
-    date: NaiveDate,
-    time: &str,
-    alcohol_type: &str,
-    quantity: f64,
-    percentage: f64,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO CONSOMMATION_ALCOOL (Usrid, Condate, Conheure, Contype, Conquantite, Conforcentage)
-        VALUES (?, ?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(date)
-    .bind(time)
-    .bind(alcohol_type)
-    .bind(quantity)
-    .bind(percentage)
-    .execute(pool)
-    .await?;
-    
+pub async fn log_alcohol_consumption(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, alcohol_type: &str, quantity: f64, percentage: f64) -> Result<i32, sqlx::Error> {
+    let dt = date.and_hms_opt(0, 0, 0).unwrap();
+    let result = sqlx::query(r#"INSERT INTO CONSOMMATION_ALCOOL (Alcdateheure, Alcquantite, Alcdegre, Alcjeun, Usrid) VALUES (?, ?, ?, 0, ?)"#)
+        .bind(dt)
+        .bind(quantity)
+        .bind(percentage)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = (time, alcohol_type);
     Ok(result.last_insert_id() as i32)
 }
 
-// ===== TODO INSERTS =====
-pub async fn create_todo(
-    pool: &DbPool,
-    user_id: i32,
-    title: &str,
-    description: Option<&str>,
-    due_date: Option<NaiveDate>,
-) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(
-        r#"
-        INSERT INTO TODO (Usrid, Todtitre, Toddescription, Toddate)
-        VALUES (?, ?, ?, ?)
-        "#,
-    )
-    .bind(user_id)
-    .bind(title)
-    .bind(description)
-    .bind(due_date)
-    .execute(pool)
-    .await?;
-    
+pub async fn create_todo(pool: &DbPool, user_id: i32, title: &str, description: Option<&str>, due_date: Option<NaiveDate>) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(r#"INSERT INTO TODO (Todtitre, Toddone, Todtimer, Totypid, Usrid) VALUES (?, 0, NULL, NULL, ?)"#)
+        .bind(title)
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    let _ = (description, due_date);
     Ok(result.last_insert_id() as i32)
 }
