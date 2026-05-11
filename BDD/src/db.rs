@@ -343,9 +343,13 @@ pub async fn get_net_balance_by_period(
 pub async fn get_planned_expenses(pool: &DbPool, user_id: i32) -> Result<Vec<PlannedExpense>, sqlx::Error> {
     sqlx::query_as::<_, PlannedExpense>(
         r#"
-        SELECT f.Facid AS facid, f.Usrid AS usrid, f.Comid AS comid, f.Facnom AS facnom,
-               f.Facmontant AS facmontant, f.FacdateProchain AS facdateprochain, f.Facdone AS facdone
+        SELECT f.Facid AS facid, f.Usrid AS usrid, f.Comid AS comid, f.Mouid AS mouid,
+               f.Facdate AS facdate, f.Facperiodicite AS facperiodicite,
+               f.Facintervalle AS facintervalle, f.FacdateProchain AS facdateprochain,
+               f.Facdone AS facdone,
+               m.Moumontant AS moumontant, m.Moudescription AS moudescription
         FROM FACTURE f
+        JOIN MOUVEMENT m ON m.Mouid = f.Mouid
         WHERE f.Usrid = ?
         ORDER BY f.FacdateProchain ASC
         "#,
@@ -358,9 +362,13 @@ pub async fn get_planned_expenses(pool: &DbPool, user_id: i32) -> Result<Vec<Pla
 pub async fn get_upcoming_planned_expenses(pool: &DbPool, user_id: i32) -> Result<Vec<PlannedExpense>, sqlx::Error> {
     sqlx::query_as::<_, PlannedExpense>(
         r#"
-        SELECT f.Facid AS facid, f.Usrid AS usrid, f.Comid AS comid, f.Facnom AS facnom,
-               f.Facmontant AS facmontant, f.FacdateProchain AS facdateprochain, f.Facdone AS facdone
+        SELECT f.Facid AS facid, f.Usrid AS usrid, f.Comid AS comid, f.Mouid AS mouid,
+               f.Facdate AS facdate, f.Facperiodicite AS facperiodicite,
+               f.Facintervalle AS facintervalle, f.FacdateProchain AS facdateprochain,
+               f.Facdone AS facdone,
+               m.Moumontant AS moumontant, m.Moudescription AS moudescription
         FROM FACTURE f
+        JOIN MOUVEMENT m ON m.Mouid = f.Mouid
         WHERE f.Usrid = ?
           AND f.FacdateProchain IS NOT NULL
           AND f.FacdateProchain >= CURDATE()
@@ -780,7 +788,7 @@ pub async fn get_mood_types(pool: &DbPool) -> Result<Vec<MoodType>, sqlx::Error>
 pub async fn get_today_mood(pool: &DbPool, user_id: i32) -> Result<Option<MoodEntry>, sqlx::Error> {
     sqlx::query_as::<_, MoodEntry>(
         r#"
-        SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
+        SELECT dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
           AND dh.DHdate = CURDATE()
@@ -794,7 +802,7 @@ pub async fn get_today_mood(pool: &DbPool, user_id: i32) -> Result<Option<MoodEn
 pub async fn get_mood_by_date(pool: &DbPool, user_id: i32, date: NaiveDate) -> Result<Option<MoodEntry>, sqlx::Error> {
     sqlx::query_as::<_, MoodEntry>(
         r#"
-        SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
+        SELECT dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
           AND dh.DHdate = ?
@@ -814,7 +822,7 @@ pub async fn get_monthly_moods(
 ) -> Result<Vec<MoodEntry>, sqlx::Error> {
     sqlx::query_as::<_, MoodEntry>(
         r#"
-        SELECT dh.Dhid AS dhid, dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
+        SELECT dh.Usrid AS usrid, dh.Humid AS humid, dh.DHdate AS dhdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
           AND dh.DHdate BETWEEN ? AND ?
@@ -1930,17 +1938,46 @@ pub async fn create_transaction(pool: &DbPool, user_id: i32, account_id: i32, ty
     Ok(id)
 }
 
-pub async fn create_planned_expense(pool: &DbPool, user_id: i32, name: &str, amount: f64, next_date: NaiveDate) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(r#"INSERT INTO FACTURE (Facdate, Facperiodicite, Facintervalle, FacdateProchain, Facdone, Mouid, Typid, Comid, Usrid) VALUES (CURDATE(), 'MOIS', 1, ?, 0, 0, NULL, NULL, ?)"#)
-        .bind(next_date)
-        .bind(user_id)
-        .execute(pool)
-        .await?;
-    let id = result.last_insert_id() as i32;
-    let _ = (name, amount);
-    Ok(id)
-}
+pub async fn create_planned_expense(
+    pool: &DbPool,
+    user_id: i32,
+    description: &str,
+    amount: f64,
+    account_id: Option<i32>,
+    type_id: Option<i32>,
+    periodicite: &str,
+    intervalle: i32,
+    next_date: NaiveDate,
+) -> Result<i32, sqlx::Error> {
+    let mou = sqlx::query(
+        r#"INSERT INTO MOUVEMENT (Moumontant, Moudate, Typid, Comid, Usrid, Moudescription)
+           VALUES (?, CURDATE(), ?, ?, ?, ?)"#,
+    )
+    .bind(amount)
+    .bind(type_id)
+    .bind(account_id)
+    .bind(user_id)
+    .bind(description)
+    .execute(pool)
+    .await?;
+    let mouid = mou.last_insert_id() as i32;
 
+    let fac = sqlx::query(
+        r#"INSERT INTO FACTURE (Facdate, Facperiodicite, Facintervalle, FacdateProchain, Facdone, Mouid, Typid, Comid, Usrid)
+           VALUES (CURDATE(), ?, ?, ?, 0, ?, ?, ?, ?)"#,
+    )
+    .bind(periodicite)
+    .bind(intervalle)
+    .bind(next_date)
+    .bind(mouid)
+    .bind(type_id)
+    .bind(account_id)
+    .bind(user_id)
+    .execute(pool)
+    .await?;
+
+    Ok(fac.last_insert_id() as i32)
+}
 pub async fn create_habit_category(pool: &DbPool, name: &str) -> Result<i32, sqlx::Error> {
     let result = sqlx::query(r#"INSERT INTO CATEGORIE (Catnom, Catplus) VALUES (?, '1')"#)
         .bind(name)
@@ -1992,18 +2029,18 @@ pub async fn create_mood_type(pool: &DbPool, name: &str) -> Result<i32, sqlx::Er
     Ok(result.last_insert_id() as i32)
 }
 
-pub async fn log_mood(pool: &DbPool, user_id: i32, type_id: i32, date: NaiveDate, notes: Option<&str>) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(r#"INSERT INTO DATE_HUMEUR (Usrid, DHdate, Humid) VALUES (?, ?, ?)"#)
+pub async fn log_mood(pool: &DbPool, user_id: i32, type_id: i32, date: NaiveDate, notes: Option<&str>) -> Result<(), sqlx::Error> {
+    sqlx::query(r#"INSERT INTO DATE_HUMEUR (Usrid, DHdate, Humid) VALUES (?, ?, ?)"#)
         .bind(user_id)
         .bind(date)
         .bind(type_id)
         .execute(pool)
         .await?;
     let _ = notes;
-    Ok(result.last_insert_id() as i32)
+    Ok(())
 }
 
-pub async fn log_hydration(pool: &DbPool, user_id: i32, date: NaiveDate, quantity: f64, hydration_type: &str, objective: f64) -> Result<i32, sqlx::Error> {
+pub async fn log_hydration(pool: &DbPool, user_id: i32, date: NaiveDate, quantity: i32, hydration_type: &str, objective: i32) -> Result<i32, sqlx::Error> {
     let result = sqlx::query(r#"INSERT INTO HYDRATATION (Hyddate, Hydquantite, Hydobjectif, Usrid) VALUES (?, ?, ?, ?)"#)
         .bind(date)
         .bind(quantity)
