@@ -122,7 +122,6 @@ pub async fn create_user_endpoint(
     let id = create_user(&pool, &payload.public_id)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -134,7 +133,6 @@ pub async fn create_account_endpoint(
     let id = create_account(&pool, user_id, &payload.name, payload.balance)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -145,7 +143,6 @@ pub async fn create_finance_type_endpoint(
     let id = create_finance_type(&pool, &payload.name)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -164,21 +161,29 @@ pub async fn create_transaction_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
+// ── CORRIGÉ : nouveaux champs alignés sur CreatePlannedExpenseRequest ──
 pub async fn create_planned_expense_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreatePlannedExpenseRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let next_date = parse_date(&payload.next_date)?;
-
-    let id = create_planned_expense(&pool, user_id, &payload.name, payload.amount, next_date)
-        .await
-        .map_err(today_dashboard_error)?;
-
+    let id = create_planned_expense(
+        &pool,
+        user_id,
+        &payload.description,
+        payload.amount,
+        payload.account_id,
+        payload.type_id,
+        &payload.periodicite,
+        payload.intervalle,
+        next_date,
+    )
+    .await
+    .map_err(today_dashboard_error)?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -189,7 +194,6 @@ pub async fn create_habit_category_endpoint(
     let id = create_habit_category(&pool, &payload.name)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -208,7 +212,6 @@ pub async fn create_habit_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -218,11 +221,9 @@ pub async fn mark_habit_complete_endpoint(
     Json(payload): Json<CompleteHabitRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = mark_habit_complete(&pool, user_id, habit_id, date)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -232,11 +233,9 @@ pub async fn create_sobriety_period_endpoint(
     Json(payload): Json<CreateSobrietyPeriodRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let start_date = parse_date(&payload.start_date)?;
-
     let id = create_sobriety_period(&pool, user_id, start_date)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -247,22 +246,20 @@ pub async fn create_mood_type_endpoint(
     let id = create_mood_type(&pool, &payload.name)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
+// ── CORRIGÉ : retourne NO_CONTENT, plus de id ──
 pub async fn log_mood_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogMoodRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<StatusCode, (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
-    let id = log_mood(&pool, user_id, payload.type_id, date, payload.notes.as_deref())
+    log_mood(&pool, user_id, payload.type_id, date, payload.notes.as_deref())
         .await
         .map_err(today_dashboard_error)?;
-
-    Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn log_hydration_endpoint(
@@ -271,7 +268,6 @@ pub async fn log_hydration_endpoint(
     Json(payload): Json<LogHydrationRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_hydration(
         &pool,
         user_id,
@@ -282,7 +278,6 @@ pub async fn log_hydration_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -292,7 +287,6 @@ pub async fn log_sleep_endpoint(
     Json(payload): Json<LogSleepRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_sleep(
         &pool,
         user_id,
@@ -304,7 +298,6 @@ pub async fn log_sleep_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -314,7 +307,6 @@ pub async fn log_meal_endpoint(
     Json(payload): Json<LogMealRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_meal(
         &pool,
         user_id,
@@ -328,7 +320,6 @@ pub async fn log_meal_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -338,7 +329,6 @@ pub async fn log_body_measurement_endpoint(
     Json(payload): Json<LogBodyMeasurementRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_body_measurement(
         &pool,
         user_id,
@@ -351,7 +341,6 @@ pub async fn log_body_measurement_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -362,7 +351,6 @@ pub async fn create_sport_type_endpoint(
     let id = create_sport_type(&pool, &payload.name)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -372,7 +360,6 @@ pub async fn log_sport_session_endpoint(
     Json(payload): Json<LogSportSessionRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_sport_session(
         &pool,
         user_id,
@@ -385,7 +372,6 @@ pub async fn log_sport_session_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -395,11 +381,9 @@ pub async fn log_breathing_session_endpoint(
     Json(payload): Json<LogBreathingSessionRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_breathing_session(&pool, user_id, date, &payload.time, payload.duration, &payload.frequency)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -409,7 +393,6 @@ pub async fn log_alcohol_consumption_endpoint(
     Json(payload): Json<LogAlcoholConsumptionRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
     let date = parse_date(&payload.date)?;
-
     let id = log_alcohol_consumption(
         &pool,
         user_id,
@@ -421,7 +404,6 @@ pub async fn log_alcohol_consumption_endpoint(
     )
     .await
     .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -434,11 +416,9 @@ pub async fn create_todo_endpoint(
         Some(value) => Some(parse_date(value)?),
         None => None,
     };
-
     let id = create_todo(&pool, user_id, &payload.title, payload.description.as_deref(), None)
         .await
         .map_err(today_dashboard_error)?;
-
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
