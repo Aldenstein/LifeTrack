@@ -1,0 +1,928 @@
+/* ============================================================
+   health.css  Styles du module Santé
+   Reprend les variables et conventions de home.css / habits.css
+   Police : Satoshi, dark theme lavande, Bulma compatible
+   ============================================================ */
+
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap');
+
+:root {
+  /* Palette de base identique aux autres modules */
+  --lav:          #9d93e0;
+  --lav-h:        #b8b0ec;
+  --bg:           #0f0e17;
+  --surface:      #16141f;
+  --surface-up:   #1c1a28;
+  --surface-top:  #221f30;
+  --border:       rgba(157,147,224,.13);
+  --txt:          #e8e6f5;
+  --txt-muted:    #8e8aa8;
+  --txt-faint:    #4e4a62;
+  --tr:           200ms cubic-bezier(.16,1,.3,1);
+
+  /* Accents propres à chaque sous-module Santé */
+  --h-sleep:      #5b7bab;   /* Sommeil  bleu nuit */
+  --h-water:      #4fc3d4;   /* Hydratation  cyan */
+  --h-mood:       #d4a853;   /* Humeur  or */
+  --h-weight:     #6aab7a;   /* Pondéraux  vert sauge */
+  --h-alcohol:    #c4607a;   /* Alcoolémie  rose */
+  --h-sober:      #5cad7a;   /* Sobriété  vert émeraude */
+  --h-breath:     #9d93e0;   /* Cohérence  lavande (accent principal) */
+
+  --h-space-xs:   clamp(.25rem, .5vw, .5rem);
+  --h-space-sm:   clamp(.5rem, 1vw, .75rem);
+  --h-space-md:   clamp(.75rem, 1.5vw, 1rem);
+  --h-space-lg:   clamp(1rem, 2vw, 1.25rem);
+
+  --h-sleep-glow:   rgba(91,123,171,.35);
+  --h-water-glow:   rgba(79,195,212,.35);
+  --h-mood-glow:    rgba(212,168,83,.35);
+  --h-weight-glow:  rgba(106,171,122,.35);
+  --h-alcohol-glow: rgba(196,96,122,.35);
+  --h-sober-glow:   rgba(92,173,122,.35);
+  --h-breath-glow:  rgba(157,147,224,.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ============================================================
+   LAYOUT COMMUN  hero + box (même pattern que habits/finance)
+   ============================================================ */
+
+/* Hero de fond avec radial-gradient lavande en haut */
+.hero.health-bg {
+  background: transparent !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Boîte principale scrollable  même que habits-box / finance-box */
+.box.health-box {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: var(--h-space-lg) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-space-lg);
+  max-width: 100%;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: center;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+/* Variante plus large pour les pages à deux colonnes (pondéraux) */
+.box.health-box--wide {
+  max-width: 100% !important;
+}
+
+/* Header de page  titre + sous-titre + back */
+.health-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -.02em;
+}
+
+.health-subtitle {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--txt-faint);
+}
+
+/* Bouton retour  identique à habits back-btn */
+.button.health-back-btn {
+  color: var(--txt-muted) !important;
+  background: var(--surface-up) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  font-size: 16px;
+  transition: all var(--tr) !important;
+}
+
+/* (Header positioning restored to default  use .page-header in home.css) */
+
+/* Center box children and tile grid */
+.box.health-box > * { width: 100%; max-width: 100%; }
+.hero.health-bg .hero-body { align-items: center !important; justify-content: center !important; padding-top: var(--h-space-lg) !important; padding-bottom: var(--h-space-lg) !important; }
+
+/* Tiles centered layout */
+/* Legacy Bulma wrapper kept neutral if still rendered anywhere */
+.dash-box { display: block; }
+
+/* New grid container used by HealthHome */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--h-space-md);
+  width: 100%;
+  align-items: start;
+}
+.health-grid-item { display:flex; justify-content:center; }
+.health-tile { width: 100%; max-width: 100%; margin: 0 auto; }
+
+/* Ensure a real responsive grid: 3 columns desktop, 2 tablet, 1 phone */
+@media screen and (max-width: 1024px) {
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media screen and (max-width: 640px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .health-tile { width: 100%; padding: var(--h-space-md); border-radius: .9rem }
+  .box.health-box { padding: var(--h-space-md) !important; max-height: calc(100vh - 72px); }
+  .hero.health-bg .hero-body { padding-top: var(--h-space-md) !important; padding-bottom: var(--h-space-md) !important; }
+}
+.button.health-back-btn:hover {
+  border-color: rgba(157,147,224,.35) !important;
+  color: var(--txt) !important;
+}
+
+/* ============================================================
+   HEALTH HOME  grille de tuiles
+   ============================================================ */
+
+/* Préserve la grille Bulma colonnes */
+.health-box .columns.is-multiline { margin: -.4375rem !important; }
+.health-box .columns.is-multiline .column { padding: .4375rem !important; }
+
+/* Tuile générique  hérite du .tile de home.css */
+.health-tile {
+  width: 100%;
+  background: var(--surface-up);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: var(--h-space-lg) var(--h-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-space-sm);
+  cursor: pointer;
+  text-align: center;
+  align-items: center;
+  font-family: inherit;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--tr), box-shadow var(--tr), transform var(--tr);
+}
+
+/* Effet radial-gradient au hover (couleur via --tc injectée inline) */
+.health-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at top left, var(--tc, var(--lav)), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--tr);
+}
+.health-tile:hover {
+  border-color: rgba(255,255,255,.13);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.health-tile:hover::before { opacity: .12; }
+.health-tile:active { transform: scale(.97); }
+
+/* Icône dans carré arrondi */
+.health-tile-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: .6rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.health-tile-name { text-align: center; }
+.health-tile-sub  { text-align: center; }
+
+.health-tile-name {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--txt);
+  line-height: 1.2;
+}
+
+.health-tile-sub {
+  font-size: .72rem;
+  color: var(--txt-muted);
+  line-height: 1.3;
+}
+
+/* Badge optionnel en haut à droite */
+.tag.health-tile-badge {
+  position: absolute !important;
+  top: .7rem !important;
+  right: .7rem !important;
+  font-size: .63rem !important;
+  font-weight: 700 !important;
+  background: rgba(255,255,255,.06) !important;
+  color: var(--tc, var(--lav)) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 999px !important;
+  padding: .15rem .5rem !important;
+  height: auto !important;
+}
+
+/* ============================================================
+   ÉTAT VIDE  notification sans données
+   ============================================================ */
+.notification.health-empty {
+  background: transparent !important;
+  border: none !important;
+  text-align: center !important;
+  color: var(--txt-faint) !important;
+  font-size: .875rem !important;
+  padding: 2.5rem 1rem !important;
+}
+
+/* ============================================================
+   BARRE DE PROGRESSION commune
+   ============================================================ */
+.health-progress-track {
+  height: 5px;
+  background: rgba(255,255,255,.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.health-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .9s cubic-bezier(.16,1,.3,1);
+  background: var(--tc, var(--lav));
+  box-shadow: 0 0 8px var(--tc, var(--lav));
+}
+
+/* ============================================================
+   ITEMS DE LISTE  même style que .mvt-item finance
+   ============================================================ */
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: var(--h-space-md);
+  padding: var(--h-space-sm) var(--h-space-md);
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background var(--tr), border-color var(--tr);
+}
+.health-item:hover {
+  background: var(--surface-up);
+  border-color: var(--border);
+}
+
+.health-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-space-xs);
+  flex: 1;
+  min-width: 0;
+}
+.health-item-title {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.health-item-meta {
+  font-size: .72rem;
+  color: var(--txt-muted);
+}
+
+/* ============================================================
+   INPUTS / LABELS  réutilise les surcharges Bulma existantes
+   ============================================================ */
+.label.health-label {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--txt-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: .3rem !important;
+}
+
+.input.health-input,
+.textarea.health-input,
+.health-select select {
+  background: var(--surface-up) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  color: var(--txt) !important;
+  font-size: .875rem !important;
+  transition: border-color var(--tr), box-shadow var(--tr) !important;
+}
+.input.health-input::placeholder,
+.textarea.health-input::placeholder { color: var(--txt-faint); }
+.input.health-input:focus,
+.textarea.health-input:focus,
+.health-select select:focus {
+  border-color: rgba(157,147,224,.5) !important;
+  box-shadow: 0 0 0 3px rgba(157,147,224,.12) !important;
+}
+
+/* ============================================================
+   BOUTONS MODAL
+   ============================================================ */
+.button.health-btn-cancel {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--txt-muted) !important;
+  border-radius: 10px !important;
+  height: 36px !important;
+  transition: all var(--tr) !important;
+}
+.button.health-btn-cancel:hover {
+  border-color: rgba(157,147,224,.35) !important;
+  color: var(--txt) !important;
+}
+
+.button.health-btn-submit {
+  background: var(--tc, var(--lav)) !important;
+  border: none !important;
+  color: #0f0e17 !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  height: 36px !important;
+  box-shadow: 0 4px 14px var(--tg, rgba(157,147,224,.35)) !important;
+  transition: background var(--tr), box-shadow var(--tr), transform .15s !important;
+}
+.button.health-btn-submit:hover { filter: brightness(1.1); }
+.button.health-btn-submit:active { transform: scale(.97) !important; }
+
+/* ============================================================
+   MODAL  même pattern que finance-modal / todo-modal
+   ============================================================ */
+.health-modal .modal-background {
+  background: rgba(0,0,0,.65) !important;
+  backdrop-filter: blur(8px);
+}
+.modal-card.health-modal-card {
+  background: var(--surface) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(157,147,224,.2) !important;
+  box-shadow: 0 0 40px rgba(157,147,224,.08), 0 32px 64px rgba(0,0,0,.6) !important;
+  width: min(440px, 92vw) !important;
+  animation: modal-in .22s cubic-bezier(.16,1,.3,1);
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-card-head.health-modal-head {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding: var(--h-space-lg) calc(var(--h-space-lg) * 1.5) !important;
+}
+.modal-card-title.health-modal-title {
+  color: var(--txt) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+.modal-card-body.health-modal-body {
+  background: var(--surface) !important;
+  padding: var(--h-space-lg) calc(var(--h-space-lg) * 1.5) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--h-space-md);
+}
+.modal-card-foot.health-modal-foot {
+  background: var(--surface) !important;
+  border-top: 1px solid var(--border) !important;
+  border-radius: 0 0 20px 20px !important;
+  padding: var(--h-space-lg) calc(var(--h-space-lg) * 1.5) !important;
+}
+
+/* ============================================================
+   TABS  identique aux tabs finance (is-toggle)
+   ============================================================ */
+.tabs.health-tabs { border-bottom: 1px solid var(--border) !important; margin-bottom: 0 !important; }
+.tabs.health-tabs ul { border-bottom: none !important; }
+.tabs.health-tabs li a {
+  color: var(--txt-muted) !important;
+  border-bottom: 2px solid transparent !important;
+  font-size: .8125rem !important;
+  font-weight: 600 !important;
+  padding: .625rem 1rem !important;
+  transition: color var(--tr), border-color var(--tr) !important;
+}
+.tabs.health-tabs li.is-active a {
+  color: var(--tc, var(--lav)) !important;
+  border-bottom-color: var(--tc, var(--lav)) !important;
+}
+
+/* ============================================================
+   SOMMEIL  mini barres historique
+   ============================================================ */
+.sleep-bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--h-space-xs);
+  height: 48px;
+}
+.sleep-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  background: var(--surface-top);
+  transition: height .6s cubic-bezier(.16,1,.3,1), background .3s;
+  min-height: 4px;
+}
+.sleep-bar.q1 { background: var(--h-alcohol); }   /* très mauvais */
+.sleep-bar.q2 { background: #b0733c; }
+.sleep-bar.q3 { background: var(--h-mood); }      /* moyen */
+.sleep-bar.q4 { background: #6aab7a; }
+.sleep-bar.q5 { background: var(--h-sober); }     /* excellent */
+
+.sleep-duration {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -.03em;
+}
+.sleep-avg {
+  font-size: .75rem;
+  color: var(--txt-muted);
+}
+
+/* ============================================================
+   HYDRATATION  jauge ronde + boutons + + +
+   ============================================================ */
+.hydra-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+}
+.hydra-gauge-val {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--h-water);
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.hydra-gauge-goal {
+  font-size: .75rem;
+  color: var(--txt-muted);
+}
+.hydra-track {
+  height: 6px;
+  background: rgba(255,255,255,.07);
+  border-radius: 99px;
+  overflow: hidden;
+  width: 100%;
+}
+.hydra-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--h-water);
+  box-shadow: 0 0 8px var(--h-water-glow);
+  transition: width .9s cubic-bezier(.16,1,.3,1);
+}
+
+/* Boutons +ml */
+.button.hydra-add-btn {
+  background: rgba(79,195,212,.1) !important;
+  border: 1px solid rgba(79,195,212,.2) !important;
+  color: var(--h-water) !important;
+  border-radius: .625rem !important;
+  font-size: .8125rem !important;
+  font-weight: 600 !important;
+  height: 34px !important;
+  transition: all var(--tr) !important;
+}
+.button.hydra-add-btn:hover {
+  background: rgba(79,195,212,.2) !important;
+  border-color: var(--h-water) !important;
+  box-shadow: 0 2px 10px var(--h-water-glow) !important;
+}
+
+/* ============================================================
+   HUMEUR  picker emoji + calendrier horizontal
+   ============================================================ */
+.mood-picker {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--h-space-sm);
+}
+.button.mood-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: .75rem !important;
+  border: 2px solid transparent !important;
+  background: var(--surface-up) !important;
+  font-size: 1.5rem !important;
+  padding: 0 !important;
+  transition: all var(--tr) !important;
+}
+.button.mood-btn:hover { transform: scale(1.1); border-color: var(--border) !important; }
+.button.mood-btn.is-active {
+  border-color: var(--h-mood) !important;
+  background: rgba(212,168,83,.12) !important;
+  box-shadow: 0 0 12px var(--h-mood-glow) !important;
+}
+
+/* Calendrier 14 jours */
+.mood-calendar {
+  display: flex;
+  gap: var(--h-space-xs);
+  overflow-x: auto;
+  padding-bottom: .25rem;
+}
+.mood-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--h-space-xs);
+  min-width: 32px;
+}
+.mood-day-emoji { font-size: 1.1rem; line-height: 1; }
+.mood-day-label { font-size: .6rem; color: var(--txt-faint); }
+.mood-day--today .mood-day-label { color: var(--h-mood); font-weight: 700; }
+
+/* ============================================================
+   CALCULS PONDÉRAUX  résultat card
+   ============================================================ */
+.pond-result {
+  background: var(--surface-up);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.125rem 1rem;
+  text-align: center;
+}
+.pond-result-val {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--h-weight);
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.pond-result-label {
+  font-size: .72rem;
+  color: var(--txt-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-top: .25rem;
+}
+.pond-result-badge {
+  display: inline-block;
+  margin-top: .5rem;
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .2rem .75rem;
+  border-radius: 99px;
+  background: rgba(106,171,122,.15);
+  color: var(--h-weight);
+}
+
+/* ============================================================
+   ALCOOLÉMIE  indicateur couleur
+   ============================================================ */
+.alco-result {
+  background: var(--surface-up);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.125rem;
+  text-align: center;
+  transition: border-color .3s;
+}
+.alco-result.green  { border-color: rgba(106,171,122,.4); }
+.alco-result.orange { border-color: rgba(212,168,83,.4); }
+.alco-result.red    { border-color: rgba(196,96,122,.4); }
+
+.alco-result-val {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.alco-result.green  .alco-result-val { color: var(--h-weight); }
+.alco-result.orange .alco-result-val { color: var(--h-mood); }
+.alco-result.red    .alco-result-val { color: var(--h-alcohol); }
+
+.alco-disclaimer {
+  font-size: .7rem;
+  color: var(--txt-faint);
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  padding-top: .75rem;
+  margin-top: .25rem;
+}
+
+/* Bouton +verre */
+.button.alco-add-btn {
+  background: rgba(196,96,122,.1) !important;
+  border: 1px solid rgba(196,96,122,.2) !important;
+  color: var(--h-alcohol) !important;
+  border-radius: 8px !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  height: 30px !important;
+  transition: all var(--tr) !important;
+}
+.button.alco-add-btn:hover {
+  background: rgba(196,96,122,.2) !important;
+  border-color: var(--h-alcohol) !important;
+}
+.button.alco-remove-btn {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  color: var(--txt-faint) !important;
+  border-radius: 8px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  transition: all var(--tr) !important;
+}
+
+/* ============================================================
+   SOBRIÉTÉ  cartes individuelles
+   ============================================================ */
+.sober-card {
+  background: var(--surface-up);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.125rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .625rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--tr), box-shadow var(--tr);
+}
+.sober-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+
+/* Barre de couleur en haut (couleur injectée via style inline --sc) */
+.sober-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--sc, var(--h-sober));
+  border-radius: 1rem 1rem 0 0;
+}
+
+.sober-card-head {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+}
+.sober-card-icon {
+  font-size: 1.375rem;
+  line-height: 1;
+}
+.sober-card-name {
+  font-size: .9375rem;
+  font-weight: 700;
+  color: var(--txt);
+}
+.sober-card-days {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--sc, var(--h-sober));
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.sober-card-days-label {
+  font-size: .7rem;
+  color: var(--txt-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* Badge palier atteint */
+.sober-card-milestone {
+  font-size: .72rem;
+  font-weight: 700;
+  background: rgba(92,173,122,.1);
+  color: var(--h-sober);
+  border-radius: 99px;
+  padding: .15rem .625rem;
+  display: inline-block;
+}
+
+/* Bouton rechute */
+.button.sober-relapse-btn {
+  background: transparent !important;
+  border: 1px solid rgba(196,96,122,.25) !important;
+  color: rgba(196,96,122,.7) !important;
+  border-radius: 8px !important;
+  font-size: .75rem !important;
+  font-weight: 600 !important;
+  height: 28px !important;
+  padding: 0 .75rem !important;
+  transition: all var(--tr) !important;
+}
+.button.sober-relapse-btn:hover {
+  background: rgba(196,96,122,.1) !important;
+  border-color: var(--h-alcohol) !important;
+  color: var(--h-alcohol) !important;
+}
+/* Confirmation rechute  état intermédiaire */
+.button.sober-relapse-btn.is-confirming {
+  background: rgba(196,96,122,.15) !important;
+  border-color: var(--h-alcohol) !important;
+  color: var(--h-alcohol) !important;
+}
+
+/* Bouton ajouter sobriété */
+.button.sober-add-btn {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--h-sober) !important;
+  border: none !important;
+  color: #0f0e17 !important;
+  font-size: 22px;
+  font-weight: 700;
+  padding: 0 !important;
+  box-shadow: 0 4px 16px var(--h-sober-glow) !important;
+  transition: background var(--tr), box-shadow var(--tr), transform .15s !important;
+}
+.button.sober-add-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px var(--h-sober-glow) !important;
+  transform: scale(1.05);
+}
+
+/* ============================================================
+   COHÉRENCE CARDIAQUE  bulle animée
+   ============================================================ */
+.breath-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem 0;
+}
+
+/* Conteneur de la bulle */
+.breath-bubble-outer {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cercle de fond (fixe) */
+.breath-bubble-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(157,147,224,.15);
+  background: rgba(157,147,224,.03);
+}
+
+/* Bulle animée  scale piloté par animation CSS */
+.breath-bubble {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--bc-light, #c5bff5), var(--bc, var(--h-breath)));
+  box-shadow:
+    0 0 30px var(--bc-glow, var(--h-breath-glow)),
+    0 0 60px var(--bc-glow, var(--h-breath-glow));
+  transition: background .5s, box-shadow .5s;
+  /* animation pilotée dynamiquement via JS */
+}
+
+/* Texte guidage centré sur la bulle */
+.breath-guide-text {
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--txt-muted);
+  letter-spacing: .05em;
+  text-align: center;
+  min-height: 1.4em;
+  transition: color .3s;
+}
+.breath-guide-text.active { color: var(--bc, var(--h-breath)); }
+
+/* Timer & compteur de cycles */
+.breath-timer {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+.breath-cycles {
+  font-size: .72rem;
+  color: var(--txt-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* Sélecteur de programme */
+.breath-program-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+}
+.button.breath-prog-btn {
+  background: var(--surface-up) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--txt-muted) !important;
+  border-radius: .75rem !important;
+  font-size: .75rem !important;
+  font-weight: 600 !important;
+  height: auto !important;
+  padding: .625rem .75rem !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  transition: all var(--tr) !important;
+}
+.button.breath-prog-btn:hover {
+  border-color: rgba(157,147,224,.3) !important;
+  color: var(--txt) !important;
+}
+.button.breath-prog-btn.is-active {
+  border-color: var(--bc, var(--h-breath)) !important;
+  background: rgba(157,147,224,.08) !important;
+  color: var(--txt) !important;
+}
+.breath-prog-name { font-size: .8rem; font-weight: 700; color: var(--txt); }
+.breath-prog-desc { font-size: .68rem; color: var(--txt-faint); }
+
+/* Boutons contrôles respiration */
+.button.breath-ctrl-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid var(--border) !important;
+  background: var(--surface-up) !important;
+  color: var(--txt-muted) !important;
+  font-size: 1.125rem !important;
+  padding: 0 !important;
+  transition: all var(--tr) !important;
+}
+.button.breath-ctrl-btn.is-primary {
+  background: var(--bc, var(--h-breath)) !important;
+  border-color: transparent !important;
+  color: #0f0e17 !important;
+  box-shadow: 0 4px 16px var(--bc-glow, var(--h-breath-glow)) !important;
+}
+.button.breath-ctrl-btn:hover { border-color: rgba(157,147,224,.3) !important; color: var(--txt) !important; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media screen and (max-width: 768px) {
+  .box.health-box {
+    max-width: 100%;
+    padding: 1.25rem !important;
+    border-radius: 1.25rem !important;
+    max-height: 100vh;
+  }
+  .box.health-box--wide { max-width: 100% !important; }
+
+  .breath-bubble-outer { width: 150px; height: 150px; }
+  .breath-bubble { width: 80px; height: 80px; }
+}
+
+@media screen and (max-width: 768px) {
+  /* Tiles: two columns on tablet */
+  .dash-box .column { flex: 0 0 50%; max-width: 50%; }
+  .health-tile { max-width: 320px; padding: 1rem; }
+  .health-tile-icon { width: 40px; height: 40px; font-size: 1.2rem }
+}
+
+@media screen and (max-width: 480px) {
+  /* Mobile: single column tiles, larger tap targets */
+  .dash-box .column { flex: 0 0 100%; max-width: 100%; }
+  .health-tile { max-width: 100%; padding: 1rem 0.75rem; border-radius: .9rem }
+  .health-tile-name { font-size: 1rem }
+  .health-tile-sub { font-size: .8rem }
+  .health-box { padding: 1rem !important; }
+  .health-tile-icon { width: 44px; height: 44px; font-size: 1.25rem }
+}
+
+/* Make hero and box behave nicely on small devices so page can scroll */
+@media screen and (max-width: 768px) {
+  .hero.health-bg.is-fullheight { min-height: auto !important; }
+  .hero.health-bg .hero-body { padding-top: 1rem !important; padding-bottom: 4rem !important; }
+  .box.health-box { max-height: calc(100vh - 120px) !important; overflow-y: auto !important; }
+  .dash-box .columns { max-height: none !important; }
+}
+
+@media screen and (max-width: 480px) {
+  .hero.health-bg.is-fullheight { min-height: auto !important; }
+  .box.health-box { max-height: calc(100vh - 96px) !important; overflow-y: auto !important; }
+}

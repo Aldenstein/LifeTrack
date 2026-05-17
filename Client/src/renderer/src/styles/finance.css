@@ -1,0 +1,488 @@
+/* ══════════════════════════════════════════
+   GRATTFINANCE  finance.css
+   Adapté aux composants React générés
+   ══════════════════════════════════════════ */
+
+:root {
+  --fin-accent:      #9d93e0;
+  --fin-accent-glow: #9d93e040;
+  --fin-accent-dim:  #9d93e018;
+  --fin-bg:          #0d0d14;
+  --fin-card:        #13131f;
+  --fin-item:        #1a1a28;
+  --fin-border:      rgba(255,255,255,.07);
+  --fin-border-h:    rgba(157,147,224,.25);
+  --fin-text:        #e8e8f0;
+  --fin-muted:       #6b6b88;
+  --fin-faint:       #3a3a52;
+  --fin-green:       #7ec8a4;
+  --fin-red:         #e07c9d;
+  --fin-space-xs:    clamp(.25rem, .5vw, .5rem);
+  --fin-space-sm:    clamp(.5rem, 1vw, .75rem);
+  --fin-space-md:    clamp(.75rem, 1.5vw, 1rem);
+  --fin-space-lg:    clamp(1rem, 2vw, 1.25rem);
+  --tr:              180ms cubic-bezier(.16,1,.3,1);
+}
+
+/* ── hero ── */
+.hero.finance-bg {
+  background: transparent !important;
+  min-height: 100vh;
+}
+
+/* ── box principale ── */
+.box.finance-box {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  padding: var(--fin-space-lg) !important;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fin-space-lg);
+  max-width: 640px;
+  margin-inline: auto;
+  align-items: center;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.finance-page-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: transparent;
+  padding: var(--fin-space-md) var(--fin-space-lg);
+  margin: 0 0 .5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Centrer les montants partout dans le module */
+.finance-solde-total__value,
+.card.compte-card .title.compte-card__solde,
+.mvt-item__montant,
+.fac-item__montant,
+.compte-stats__value {
+  text-align: center !important;
+  display: block;
+}
+.finance-box--wide { max-width: 640px !important; }
+
+/* Center box children and limit content width */
+.box.finance-box > * { width: 100%; max-width: 640px; }
+
+/* subtle backdrop for sticky header */
+.finance-page-header { backdrop-filter: blur(6px); }
+
+/* ── titles ── */
+.finance-title    { font-size: 1.5rem; font-weight: 800; color: var(--fin-text); letter-spacing: -.01em; text-align: center; }
+.finance-subtitle { font-size: .85rem; color: var(--fin-muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; text-align: center; }
+
+/* ── back btn ── */
+.button.finance-back-btn {
+  color: var(--fin-muted) !important;
+  background: var(--fin-item) !important;
+  border: 1px solid var(--fin-border) !important;
+  border-radius: 8px !important;
+  width: 32px !important; height: 32px !important;
+  padding: 0 !important; font-size: 16px;
+  transition: all var(--tr) !important;
+}
+.button.finance-back-btn:hover { border-color: var(--fin-border-h) !important; color: var(--fin-text) !important; }
+
+/* ── add btn ── */
+.button.finance-add-btn {
+  width: 36px !important; height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--fin-accent) !important;
+  border: none !important; color: #0f0e17 !important;
+  font-size: 22px; font-weight: 700; padding: 0 !important;
+  box-shadow: 0 4px 16px var(--fin-accent-glow) !important;
+  transition: background var(--tr), box-shadow var(--tr), transform .15s !important;
+}
+.button.finance-add-btn:hover  { background: #b3abeb !important; transform: scale(1.05); }
+.button.finance-add-btn:active { transform: scale(.97); }
+
+/* ── solde total ── */
+.finance-solde-total {
+  padding: var(--fin-space-lg);
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  text-align: center;
+}
+.finance-solde-total__label {
+  font-size: .7rem !important; color: var(--fin-muted) !important;
+  text-transform: uppercase !important; letter-spacing: .08em !important;
+  margin-bottom: .25rem !important;
+}
+.finance-solde-total__value {
+  font-size: 2rem !important; font-weight: 700 !important;
+  font-variant-numeric: tabular-nums; margin-bottom: 0 !important;
+}
+
+/* ── couleurs ── */
+.positif { color: var(--fin-green) !important; }
+.negatif { color: var(--fin-red)   !important; }
+
+/* ── notification vide ── */
+.notification.finance-empty {
+  background: transparent !important; border: none !important;
+  text-align: center !important; color: var(--fin-faint) !important;
+  font-size: .875rem !important; padding: 2.5rem 1rem !important;
+}
+
+/* ══════════════════════════════
+   CompteCard
+   Classes: .card.compte-card
+   ══════════════════════════════ */
+.card.compte-card {
+  background: var(--fin-item) !important;
+  border: 1px solid var(--fin-border) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: border-color var(--tr), transform var(--tr), box-shadow var(--tr);
+  overflow: visible !important;
+  position: relative;
+}
+.card.compte-card:hover {
+  border-color: var(--fin-border-h) !important;
+  box-shadow: 0 4px 20px rgba(157,147,224,.12) !important;
+  transform: translateY(-2px);
+}
+
+/* Variante: boite au style 'todo' pour un agencement similaire */
+.box.compte-card {
+  background: var(--fin-item) !important;
+  border: 1px solid var(--fin-border) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: hidden;
+  transition: border-color var(--tr), opacity .28s ease, transform .28s ease;
+}
+.box.compte-card:hover { border-color: var(--fin-border-h) !important; }
+
+.box.compte-card .media.compte-card__main {
+  padding: .75rem 1rem;
+  margin: 0 !important;
+  align-items: center;
+}
+
+.compte-card__icon {
+  width: 40px; height: 40px; display:flex; align-items:center; justify-content:center;
+  border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.04);
+}
+
+.media-content {
+  display: flex; flex-direction: column; gap: 4px;
+
+  min-width: 0; /* pour permettre au texte de rétrécir et éviter overflow */
+  }
+.compte-card__nom { font-size: .9rem; font-weight: 600; color: var(--fin-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.compte-card__meta { font-size: .7rem; color: var(--fin-muted); }
+
+.compte-card__actions { opacity: 0; transition: opacity .15s; display:flex; align-items:center; }
+.box.compte-card:hover .compte-card__actions { opacity: 1; }
+.button.compte-card__btn { background: transparent; border: 1px solid rgba(255,255,255,.04); }
+.button.compte-card__btn--danger { border-color: rgba(224,124,157,.18) }
+
+.compte-card__balance { padding: 0; text-align: right; }
+
+.media-right { display:flex; flex-direction:column; align-items:flex-end; gap: .375rem; }
+
+/* Responsive mobile specific for finance cards */
+@media screen and (max-width: 768px) {
+  .box.compte-card { border-radius: 16px; }
+  .compte-card__nom { font-size: 1rem }
+}
+
+@media screen and (max-width: 480px) {
+  .box.compte-card { padding: 0; }
+  .compte-card__nom { font-size: 1.05rem; white-space: normal; overflow: visible; word-break: break-word }
+  .compte-card__meta { display: none }
+}
+
+/* Ensure account name always visible and allowed to wrap on all devices */
+.box.compte-card { width: 100%; }
+.compte-card__nom {}
+.media-content { min-width: 0; }
+.media-content .compte-card__nom { word-break: break-word }
+
+/* card-header = nom + bouton delete */
+.card.compte-card .card-header {
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  padding: .875rem 1rem .25rem !important;
+}
+.card.compte-card .card-header-title.compte-card__nom {
+  color: var(--fin-text) !important;
+  font-size: .875rem !important; font-weight: 600 !important;
+  padding: 0 !important;
+}
+.card.compte-card .card-header-icon {
+  opacity: 0; transition: opacity var(--tr);
+  background: transparent !important; border: none !important;
+}
+.card.compte-card:hover .card-header-icon { opacity: 1; }
+
+/* card-content = solde */
+.card.compte-card .card-content.compte-card__content {
+  padding: .25rem 1rem !important;
+}
+.card.compte-card .title.compte-card__solde {
+  font-size: 1.25rem !important; font-weight: 700 !important;
+  font-variant-numeric: tabular-nums; margin-bottom: 0 !important;
+}
+
+/* card-footer = nb mouvements + flèche */
+.card.compte-card .card-footer.compte-card__footer {
+  background: transparent !important;
+  border-top: 1px solid var(--fin-border) !important;
+  padding: 0 !important;
+}
+.card.compte-card .card-footer-item.compte-card__meta {
+  font-size: .7rem !important; color: var(--fin-muted) !important;
+  border-right: 1px solid var(--fin-border) !important;
+  padding: .5rem 1rem !important;
+  justify-content: flex-start !important;
+}
+.card.compte-card .card-footer-item.compte-card__arrow {
+  font-size: 1rem !important; color: var(--fin-accent) !important;
+  padding: .5rem 1rem !important;
+  justify-content: flex-end !important;
+}
+
+/* ══════════════════════════════
+   CompteDetail  stats
+   Classes: .compte-stats, .compte-stats__value
+   ══════════════════════════════ */
+.compte-stats {
+  background: var(--fin-item);
+  border: 1px solid var(--fin-border);
+  border-radius: 14px;
+  padding: .875rem 0;
+}
+.compte-stats__value {
+  font-size: 1rem !important; font-weight: 700 !important;
+  font-variant-numeric: tabular-nums; margin-bottom: 0 !important;
+}
+
+/* ── tabs ── */
+.tabs.fin-tabs {
+  border-bottom: 1px solid var(--fin-border) !important;
+  margin-bottom: 0 !important;
+}
+.tabs.fin-tabs ul { border-bottom: none !important; }
+.tabs.fin-tabs li a {
+  color: var(--fin-muted) !important;
+  border-bottom: 2px solid transparent !important;
+  font-size: .8125rem !important; font-weight: 600 !important;
+  padding: .625rem 1rem !important;
+  transition: color var(--tr), border-color var(--tr) !important;
+  display: flex; align-items: center; gap: .4rem;
+}
+.tabs.fin-tabs li.is-active a {
+  color: var(--fin-accent) !important;
+  border-bottom-color: var(--fin-accent) !important;
+}
+.fin-tab__badge {
+  background: var(--fin-faint) !important; color: var(--fin-text) !important;
+  font-size: .65rem !important; height: 16px !important;
+  padding: 0 .35rem !important; border-radius: 99px !important;
+}
+.tabs.fin-tabs li.is-active .fin-tab__badge {
+  background: var(--fin-accent-dim) !important;
+  color: var(--fin-accent) !important;
+}
+
+/* ── liste générique ── */
+.fin-list { display: flex; flex-direction: column; gap: 2px; }
+
+/* ══════════════════════════════
+   TransactionCard
+   Classes: .mvt-item, .mvt-item__*
+   ══════════════════════════════ */
+.mvt-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .625rem .75rem; border-radius: 10px;
+  background: transparent;
+  transition: background var(--tr);
+}
+.mvt-item:hover { background: var(--fin-item); }
+.mvt-item__dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: .7;
+}
+.mvt-item__dot.positif { background: var(--fin-green); }
+.mvt-item__dot.negatif { background: var(--fin-red); }
+.mvt-item__info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.mvt-item__type {
+  font-size: .8125rem; font-weight: 600; color: var(--fin-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mvt-item__date  { font-size: .7rem; color: var(--fin-muted); }
+.mvt-item__desc  { color: var(--fin-muted); }
+.mvt-item__right { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.mvt-item__montant { font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ══════════════════════════════
+   PlannedExpenseCard
+   Classes: .fac-item, .fac-item__*
+   ══════════════════════════════ */
+.fac-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .75rem; border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background var(--tr), border-color var(--tr);
+}
+.fac-item:hover { background: var(--fin-item); }
+.fac-item--urgent {
+  border-color: rgba(224,193,60,.2) !important;
+  background: rgba(224,193,60,.04) !important;
+}
+.fac-item__info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.fac-item__type {
+  font-size: .8125rem; font-weight: 600; color: var(--fin-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fac-item__periode { font-size: .7rem; color: var(--fin-muted); }
+.fac-item__date { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; }
+.fac-item__date-label { font-size: .65rem; color: var(--fin-muted); text-transform: uppercase; letter-spacing: .06em; }
+.fac-item__tag {
+  background: var(--fin-faint) !important; color: var(--fin-text) !important;
+  font-size: .7rem !important; border-radius: 6px !important;
+  padding: 0 .4rem !important; height: 20px !important;
+  border: none !important;
+}
+.fac-item__tag.is-warning {
+  background: rgba(224,193,60,.15) !important;
+  color: #e0c13c !important;
+}
+.fac-item__right   { display: flex; align-items: center; flex-shrink: 0; }
+    
+.fac-item__montant { font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ══════════════════════════════
+   Modals (CompteModal, TransactionModal, PlannedExpenseModal)
+   Classes: .finance-modal, .modal-card.finance-modal__card, etc.
+   ══════════════════════════════ */
+.finance-modal .modal-background {
+  background: rgba(0,0,0,.65) !important;
+    padding: var(--fin-space-lg) !important;
+}
+.modal-card.finance-modal__card {
+    gap: var(--fin-space-lg);
+  border-radius: 20px !important;
+  border: 1px solid rgba(157,147,224,.2) !important;
+  box-shadow: 0 0 40px rgba(157,147,224,.08), 0 32px 64px rgba(0,0,0,.6) !important;
+    padding: var(--fin-space-lg);
+  animation: modal-in .22s cubic-bezier(.16,1,.3,1);
+}
+@keyframes modal-in {
+  from { opacity:0; transform:translateY(10px) scale(.97) }
+  to   { opacity:1; transform:none }
+}
+.modal-card-head.finance-modal__head {
+    padding: var(--fin-space-md) var(--fin-space-lg);
+  border-bottom: 1px solid var(--fin-border) !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding: 1.25rem 1.5rem !important;
+}
+.modal-card-title.finance-modal__title {
+  .compte-card__actions { opacity: 0; transition: opacity .15s; display:flex; align-items:center; gap: var(--fin-space-xs); }
+  color: var(--fin-text) !important; font-size: 1rem !important; font-weight: 700 !important;
+}
+.modal-card-body.finance-modal__body {
+  background: var(--fin-card) !important;
+  padding: 1.25rem 1.5rem !important;
+    padding: var(--fin-space-md) 0;
+}
+.modal-card-foot.finance-modal__foot {
+  background: var(--fin-card) !important;
+  border-top: 1px solid var(--fin-border) !important;
+    padding: var(--fin-space-sm) var(--fin-space-md); border-radius: 10px;
+  padding: 1rem 1.5rem !important;
+}
+
+/* ── label + input ── */
+.label.finance-label {
+  font-size: 10px !important; font-weight: 600 !important;
+    padding: var(--fin-space-md); border-radius: 10px;
+  letter-spacing: .08em !important; margin-bottom: .3rem !important;
+}
+.input.finance-input {
+  background: var(--fin-item) !important;
+  border: 1px solid var(--fin-border) !important;
+  border-radius: 10px !important; color: var(--fin-text) !important;
+  font-size: .875rem !important;
+    padding: var(--fin-space-lg) calc(var(--fin-space-lg) * 1.5) !important;
+}
+.input.finance-input::placeholder { color: var(--fin-faint); }
+.input.finance-input:focus {
+  border-color: rgba(157,147,224,.5) !important;
+    .box.finance-box { max-width: 100%; padding: var(--fin-space-md) !important; border-radius: 12px !important; }
+}
+.finance-input__icon { color: var(--fin-muted) !important; font-style: normal !important; font-size: .875rem !important; }
+
+.finance-page-header { padding: var(--fin-space-sm) var(--fin-space-md); }
+.box.finance-box > * { padding-left: var(--fin-space-sm); padding-right: var(--fin-space-sm); }
+
+.finance-select select:focus {
+  border-color: rgba(157,147,224,.5) !important;
+  box-shadow: 0 0 0 3px rgba(157,147,224,.12) !important;
+}
+.finance-select::after { border-color: var(--fin-muted) !important; }
+
+/* ── boutons modal ── */
+.button.finance-btn-cancel {
+  background: transparent !important;
+  border: 1px solid var(--fin-border) !important;
+  color: var(--fin-muted) !important; border-radius: 10px !important; height: 36px !important;
+  transition: all var(--tr) !important;
+}
+.button.finance-btn-cancel:hover { border-color: var(--fin-border-h) !important; color: var(--fin-text) !important; }
+.button.finance-btn-submit {
+  background: var(--fin-accent) !important; border: none !important;
+  color: #0f0e17 !important; font-weight: 700 !important;
+  border-radius: 10px !important; height: 36px !important;
+  box-shadow: 0 4px 14px var(--fin-accent-glow) !important;
+  transition: background var(--tr), box-shadow var(--tr) !important;
+}
+.button.finance-btn-submit:hover  { background: #b3abeb !important; }
+.button.finance-btn-submit:disabled { opacity: .4 !important; cursor: not-allowed !important; }
+
+/* ── toggle dépense/entrée  TransactionModal ── */
+.fin-toggle { width: 100%; margin-bottom: 0 !important; }
+.fin-toggle__btn {
+  flex: 1;
+  background: var(--fin-item) !important;
+  border: 1px solid var(--fin-border) !important;
+  color: var(--fin-muted) !important;
+  font-size: .8125rem !important; font-weight: 600 !important; height: 34px !important;
+  transition: all var(--tr) !important;
+}
+.fin-toggle__btn.is-active {
+  background: var(--fin-accent) !important;
+  border-color: var(--fin-accent) !important;
+  color: #0f0e17 !important;
+  box-shadow: 0 2px 10px var(--fin-accent-glow) !important;
+}
+
+/* ── required star ── */
+.fin-required { color: var(--fin-red); margin-left: 2px; }
+
+/* ── responsive ── */
+@media screen and (max-width: 768px) {
+  .box.finance-box { max-width: 100%; padding: 0.75rem !important; border-radius: 12px !important; }
+  .finance-box--wide { max-width: 100% !important; }
+  .finance-title { font-size: 1.25rem !important; }
+  .compte-stats__value { font-size: .875rem !important; }
+  .finance-page-header { padding: .6rem .75rem; }
+  .box.finance-box > * { padding-left: .5rem; padding-right: .5rem; }
+}

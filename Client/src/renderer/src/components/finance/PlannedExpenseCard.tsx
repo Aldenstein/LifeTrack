@@ -1,0 +1,48 @@
+import type { ApiPlannedExpense, ApiFinanceType } from '@/types/api'
+
+interface Props {
+  expense:      ApiPlannedExpense
+  financeTypes: ApiFinanceType[]
+}
+
+function getJoursRestants(nextDate: string): number {
+  const today = new Date(); today.setHours(0,0,0,0)
+  return Math.ceil((new Date(nextDate).getTime() - today.getTime()) / 86400000)
+}
+
+function labelPeriode(e: ApiPlannedExpense): string {
+  const map: Record<string, string> = { JOUR: 'jour', SEMAINE: 'semaine', MOIS: 'mois', ANNEE: 'an' }
+  const unite = map[e.periodicite] ?? e.periodicite.toLowerCase()
+  return e.intervalle === 1 ? `Tous les ${unite}s` : `Tous les ${e.intervalle} ${unite}s`
+}
+
+export default function PlannedExpenseCard({ expense, financeTypes }: Props) {
+  const type       = financeTypes.find(t => t.id === expense.type_id)
+  const joursRest  = getJoursRestants(expense.next_date)
+  const urgent     = joursRest <= 3
+  const prochaine  = new Date(expense.next_date).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: 'short',
+  })
+
+  return (
+    <div className={`fac-item ${urgent ? 'fac-item--urgent' : ''}`}>
+      <div className="fac-item__info">
+        <span className="fac-item__type">{expense.description}</span>
+        <span className="fac-item__periode">
+          {type?.name && <>{type.name} · </>}{labelPeriode(expense)}
+        </span>
+      </div>
+      <div className="fac-item__date">
+        <span className="fac-item__date-label">Prochain</span>
+        <span className={`tag fac-item__tag ${urgent ? 'is-warning' : ''}`}>
+          {urgent ? `J-${joursRest}` : prochaine}
+        </span>
+      </div>
+      <div className="fac-item__right">
+        <span className="fac-item__montant negatif">
+          {expense.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+        </span>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,171 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap');
+
+:root {
+  --lav:      #9d93e0;
+  --lav-h:    #b8b0ec;
+  --bg:       #0f0e17;
+  --surface:  #16141f;
+  --surface-up: #1c1a28;
+  --surface-top: #221f30;
+  --border:   rgba(157,147,224,.13);
+  --txt:      #e8e6f5;
+  --txt-muted:#8e8aa8;
+  --txt-faint:#4e4a62;
+  --tr:       200ms cubic-bezier(.16,1,.3,1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Satoshi', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================================================
+   OVERRIDES BULMA
+   ================================================ */
+.page-header {
+  padding: 1rem 1.50rem;
+}
+/* level s couleurs de texte pour le mode sombre */
+
+  .dash-sub  { color: var(--txt-faint) !important; letter-spacing: .1em; margin-left: .1em; }
+.dash-name { font-size: 1.25rem; font-weight: 700; color: var(--txt); letter-spacing: -.02em; margin-left: .1em; }
+
+/* bouton de déconnexion */
+.button.dash-logout {
+  width: 34px; height: 34px !important;
+  border-radius: .625rem !important;
+  background: var(--surface-up) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--txt-muted) !important;
+  padding: 0 !important;
+  font-size: .875rem;
+  transition: all var(--tr) !important;
+}
+.button.dash-logout:hover { border-color: #e07c9d !important; color: #e07c9d !important; }
+
+/* hr Bulma (recolore pour le dark) */
+hr { background: var(--border) !important; height: 1px !important; margin: 0 !important; }
+
+
+
+/* ── Gauge ── */
+.gauge-section {
+  width: min(70%, 380px);
+  max-width: 380px;
+  gap: .25rem;
+  padding: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-inline: auto;
+}
+
+.gauge-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+.gauge-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .gauge-section {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.gauge-center {
+  position: absolute; bottom: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+}
+.gauge-center__val {
+  font-size: 2.25rem; font-weight: 700;
+  letter-spacing: -.04em; line-height: 1;
+}
+/* gauge-lbl utilise is-size-7 has-text-weight-bold Bulma + override couleur */
+.gauge-lbl { color: var(--txt-muted) !important; letter-spacing: .1em; }
+
+/* stats sous la jauge */
+.gstat__val {
+  font-size: .9375rem; font-weight: 700;
+  color: var(--lav); letter-spacing: -.01em;
+}
+.gstat__lbl { color: var(--txt-faint) !important; letter-spacing: .08em; }
+
+/* ── Tiles ── */
+/* ✅ APRÈS  grille Bulma préservée */
+.dash-box .columns.is-multiline {
+  margin: -.4375rem !important;
+}
+.dash-box .columns.is-multiline .column {
+  padding: .4375rem !important;
+}
+
+.tile {
+  width: 100%;
+  background: var(--surface-up);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.125rem 1rem;
+  display: flex; flex-direction: column; gap: .625rem;
+  cursor: pointer; text-align: left;
+  font-family: inherit; color: inherit;
+  position: relative; overflow: hidden;
+  transition: border-color var(--tr), box-shadow var(--tr), transform var(--tr);
+}
+.tile::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(ellipse at top left, var(--tg, transparent), transparent 70%);
+  opacity: 0; transition: opacity var(--tr);
+}
+.tile:hover { border-color: rgba(255,255,255,.13); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.tile:hover::before { opacity: 1; }
+.tile:active { transform: scale(.97); }
+.tile:focus-visible { outline: 2px solid var(--tc); outline-offset: 3px; }
+
+/* tag Bulma recoloré pour le badge */
+.tag.tile__badge {
+  position: absolute; top: .7rem; right: .7rem;
+  font-size: .63rem !important; font-weight: 700 !important;
+  background: rgba(255,255,255,.06) !important;
+  color: var(--tc) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 999px !important;
+  padding: .15rem .5rem !important;
+  height: auto !important;
+}
+
+.tile__icon {
+  width: 36px; height: 36px; border-radius: .6rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+
+.tile__name { font-size: .875rem; font-weight: 600; color: var(--txt); line-height: 1.2; }
+.tile__sub  { font-size: .72rem; color: var(--txt-muted); line-height: 1.3; }
+
+.tile__bar-track {
+  height: 3px; background: rgba(255,255,255,.07);
+  border-radius: 99px; overflow: hidden;
+}
+.tile__bar-fill {
+  height: 100%; border-radius: 99px;
+  background: var(--tc); box-shadow: 0 0 6px var(--tc);
+  transition: width 1s cubic-bezier(.16,1,.3,1);
+}
