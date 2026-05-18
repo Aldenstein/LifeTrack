@@ -18,8 +18,8 @@ Ce projet est organisé autour d'une application Rust, de scripts SQL et des fic
 ├── requirement.txt
 ├── SQL
 │   ├── requests.sql
-│   ├── selftrack_create.sql
-│   └── selftrack_db_create.sql
+│   ├── inserts.sql
+│   └── lifetrack_full.sql
 ├── src
 │   ├── api.rs
 │   ├── config.rs
@@ -59,13 +59,13 @@ Ce dossier contient les scripts SQL utilisés par le projet.
 Regroupe les requêtes SQL utiles à l’application.  
 Il peut servir de référence ou contenir des requêtes testées avant intégration dans le code Rust.
 
-###### `SQL/selftrack_create.sql`
-Script de création de tables ou d’objets SQL liés au cœur fonctionnel du projet.  
-Il sert à initialiser une partie du schéma de données.
+###### `SQL/inserts.sql`
+Regroupe des données d’exemple pour peupler la base.  
+Il peut servir à tester rapidement les écrans, les listes et les requêtes métiers.
 
-###### `SQL/selftrack_db_create.sql`
-Script de création globale de la base de données.  
-Il peut contenir la création de la base, du schéma principal ou des éléments structurants initiaux.
+###### `SQL/lifetrack_full.sql`
+Script unique de création de la base et du schéma complet.  
+Il contient la création de la base de données, les tables métier et l’ajout des colonnes liées à l’authentification.
 
 ##### Dossier `src`
 
