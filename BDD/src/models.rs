@@ -42,7 +42,7 @@ pub struct User {
     pub email: String,              // Email de connexion
     pub passphrase_hash: String,    // Hash Argon2 (jamais la passphrase en clair)
     pub usrcreated_at: NaiveDateTime, // Timestamp création compte
-pub encryption_salt: Option<String>, // Salt hex pour dérivation clé AES-256
+    pub encryption_salt: Option<String>, // Salt hex pour dérivation clé AES-256
 }
 
 /// Clés de chiffrement dérivées pour le client
