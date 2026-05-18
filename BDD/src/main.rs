@@ -2,6 +2,7 @@
 //! Initialise la configuration, connecte la base de données et démarre le serveur HTTP
 
 mod api;
+mod api_get_endpoints;
 mod auth;
 mod config;
 mod db;
