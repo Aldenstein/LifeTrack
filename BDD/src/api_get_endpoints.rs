@@ -614,7 +614,7 @@ pub async fn get_nutrition_history_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<NutritionHistory>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<Vec<NutritionHistory>>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_nutrition_history(&pool, user_id, start, end)
@@ -796,7 +796,7 @@ pub async fn get_sport_chart_data_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<SportDurationTotal>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<Vec<SportChartData>>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_sport_chart_data(&pool, user_id, start, end)
