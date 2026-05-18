@@ -181,6 +181,8 @@ pub struct CreateTodoRequest {
     pub due_date: Option<String>,
 }
 
+// ── Zero-Knowledge ──────────────────────────────────────────────────────────
+
 #[derive(Debug, Deserialize)]
 pub struct EncryptedPayloadRequest {
     pub date: NaiveDate,
@@ -200,6 +202,20 @@ pub struct LocalDecryptRequest {
     pub ciphertext: String,
     pub passphrase: String,
 }
+
+/// Ligne retournée depuis la table DONNEE_CHIFFREE.
+/// Le serveur ne connaît jamais le contenu en clair.
+#[derive(Debug, Serialize, FromRow)]
+pub struct EncryptedEntry {
+    pub dcid: i32,
+    pub usrid: i32,
+    pub dcdate: NaiveDate,
+    pub dciv: String,
+    pub dcciphertext: String,
+    pub dcversion: i32,
+}
+
+// ── Profil & Dashboards ─────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct UserProfile {
@@ -530,7 +546,7 @@ pub struct NutritionHistory {
 #[derive(Debug, Serialize, FromRow)]
 pub struct AverageCalories {
     pub weekly_calorie_average: f64,
-	}
+}
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct BodyMeasurement {

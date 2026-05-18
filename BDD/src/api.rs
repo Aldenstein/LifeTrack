@@ -1,5 +1,10 @@
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    Json,
+};
 use chrono::{Local, NaiveDate};
+use serde::Deserialize;
 
 use crate::db::{
     create_account,
@@ -26,9 +31,13 @@ use crate::db::{
     log_sleep,
     log_sport_session,
     mark_habit_complete,
+    save_encrypted_entry,
+    get_encrypted_entries,
+    get_all_encrypted_entries,
     DbPool,
 };
 use crate::models::*;
+use crate::utils::parse_date;
 
 fn user_profile_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
     (
@@ -70,6 +79,15 @@ fn bad_request(message: impl Into<String>) -> (StatusCode, Json<ApiError>) {
     (StatusCode::BAD_REQUEST, Json(ApiError { message: message.into() }))
 }
 
+fn encrypted_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ApiError {
+            message: format!("Encrypted storage error: {error}"),
+        }),
+    )
+}
+
 pub async fn user_profile(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
@@ -108,11 +126,6 @@ pub async fn health_check() -> Json<HealthStatus> {
 
 pub fn start_api() {
     println!("API started");
-}
-
-fn parse_date(date: &str) -> Result<NaiveDate, (StatusCode, Json<ApiError>)> {
-    NaiveDate::parse_from_str(date, "%Y-%m-%d")
-        .map_err(|_| bad_request(format!("Invalid date format '{date}', expected YYYY-MM-DD")))
 }
 
 pub async fn create_user_endpoint(
@@ -164,7 +177,6 @@ pub async fn create_transaction_endpoint(
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
-// ── CORRIGÉ : nouveaux champs alignés sur CreatePlannedExpenseRequest ──
 pub async fn create_planned_expense_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
@@ -249,7 +261,6 @@ pub async fn create_mood_type_endpoint(
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
-// ── CORRIGÉ : retourne NO_CONTENT, plus de id ──
 pub async fn log_mood_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
@@ -422,6 +433,61 @@ pub async fn create_todo_endpoint(
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
+// ── Zero-Knowledge endpoints ─────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+pub struct EncryptedDateQuery {
+    pub date: Option<String>,
+}
+
+/// POST /users/:user_id/encrypted
+/// Reçoit { date, iv, ciphertext, version } — le serveur stocke iv + ciphertext
+/// opaques sans jamais déchiffrer.
+pub async fn save_encrypted_entry_endpoint(
+    State(pool): State<DbPool>,
+    Path(user_id): Path<i32>,
+    Json(payload): Json<EncryptedPayloadRequest>,
+) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+    let id = save_encrypted_entry(
+        &pool,
+        user_id,
+        payload.date,
+        &payload.iv,
+        &payload.ciphertext,
+        payload.version,
+    )
+    .await
+    .map_err(encrypted_error)?;
+    Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
+}
+
+/// GET /users/:user_id/encrypted?date=YYYY-MM-DD
+/// Retourne les entrées chiffrées pour une date précise.
+pub async fn get_encrypted_entries_endpoint(
+    State(pool): State<DbPool>,
+    Path(user_id): Path<i32>,
+    Query(params): Query<EncryptedDateQuery>,
+) -> Result<Json<Vec<EncryptedEntry>>, (StatusCode, Json<ApiError>)> {
+    let date_str = params.date.ok_or_else(|| bad_request("Missing query param 'date'"))?;
+    let date = parse_date(&date_str)?;
+    get_encrypted_entries(&pool, user_id, date)
+        .await
+        .map(Json)
+        .map_err(encrypted_error)
+}
+
+/// GET /users/:user_id/encrypted/all
+/// Retourne toutes les entrées chiffrées de l'utilisateur.
+pub async fn get_all_encrypted_entries_endpoint(
+    State(pool): State<DbPool>,
+    Path(user_id): Path<i32>,
+) -> Result<Json<Vec<EncryptedEntry>>, (StatusCode, Json<ApiError>)> {
+    get_all_encrypted_entries(&pool, user_id)
+        .await
+        .map(Json)
+        .map_err(encrypted_error)
+}
+
 pub async fn api_info() -> Json<ApiInfo> {
     Json(ApiInfo {
         name: "LifeTrack API".to_string(),
@@ -497,6 +563,21 @@ pub async fn api_info() -> Json<ApiInfo> {
                 method: "POST".to_string(),
                 path: "/users/:user_id/todos".to_string(),
                 description: "Create a todo for user".to_string(),
+            },
+            EndpointInfo {
+                method: "POST".to_string(),
+                path: "/users/:user_id/encrypted".to_string(),
+                description: "Store an AES-GCM encrypted payload (ZK — server never decrypts)".to_string(),
+            },
+            EndpointInfo {
+                method: "GET".to_string(),
+                path: "/users/:user_id/encrypted?date=YYYY-MM-DD".to_string(),
+                description: "Get encrypted entries for a specific date".to_string(),
+            },
+            EndpointInfo {
+                method: "GET".to_string(),
+                path: "/users/:user_id/encrypted/all".to_string(),
+                description: "Get all encrypted entries for a user".to_string(),
             },
         ],
     })

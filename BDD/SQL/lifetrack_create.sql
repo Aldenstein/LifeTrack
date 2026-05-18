@@ -276,3 +276,20 @@ CREATE TABLE COHERENCE_CARDIAQUE (
     PRIMARY KEY (Cohid),
     FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
 );
+
+-- -----------------------------------------------------------
+-- 12. DONNEES CHIFFREES (Zero-Knowledge)
+-- Le serveur ne stocke que iv + ciphertext opaques.
+-- Le chiffrement AES-GCM est 100% cote client.
+-- -----------------------------------------------------------
+
+CREATE TABLE DONNEE_CHIFFREE (
+    Dcid          INT         NOT NULL AUTO_INCREMENT,
+    Usrid         INT         NOT NULL,
+    Dcdate        DATE        NOT NULL,
+    Dciv          VARCHAR(64) NOT NULL,
+    Dcciphertext  TEXT        NOT NULL,
+    Dcversion     INT         NOT NULL DEFAULT 1,
+    PRIMARY KEY (Dcid),
+    FOREIGN KEY (Usrid) REFERENCES UTILISATEUR(Usrid)
+);

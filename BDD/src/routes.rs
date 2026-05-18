@@ -9,6 +9,10 @@ use crate::api::{
     log_breathing_session_endpoint, log_hydration_endpoint, log_meal_endpoint, log_mood_endpoint,
     log_sleep_endpoint, log_sport_session_endpoint, mark_habit_complete_endpoint,
     today_dashboard, user_profile,
+    // Zero-Knowledge
+    save_encrypted_entry_endpoint,
+    get_encrypted_entries_endpoint,
+    get_all_encrypted_entries_endpoint,
 };
 use crate::db::DbPool;
 
@@ -55,5 +59,14 @@ pub fn init_routes(pool: DbPool) -> Router {
             post(log_alcohol_consumption_endpoint),
         )
         .route("/users/:user_id/todos", post(create_todo_endpoint))
+        // ── Zero-Knowledge routes ────────────────────────────────────────────
+        .route(
+            "/users/:user_id/encrypted",
+            post(save_encrypted_entry_endpoint).get(get_encrypted_entries_endpoint),
+        )
+        .route(
+            "/users/:user_id/encrypted/all",
+            get(get_all_encrypted_entries_endpoint),
+        )
         .with_state(pool)
 }
