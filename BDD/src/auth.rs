@@ -7,16 +7,15 @@ use axum::{
 };
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use chrono::Utc;
-use sqlx::MySqlPool;
 use hex;
 
 use crate::models::{ApiError, JwtClaims, AuthResponse, RegisterRequest, LoginRequest, DerivedKeysResponse};
 use crate::password::{hash_passphrase, verify_passphrase, generate_salt, derive_encryption_key};
-use crate::db;
+use crate::db::{self, DbPool};
 
 /// Middleware Axum pour valider les JWT tokens
 pub async fn validate_jwt(
-    State((pool, jwt_secret)): State<(MySqlPool, String)>,
+    State((pool, jwt_secret)): State<(DbPool, String)>,
     req: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, Json<ApiError>)> {
@@ -84,7 +83,7 @@ pub async fn validate_jwt(
 /// Enregistre un nouvel utilisateur, genere le salt AES une seule fois
 /// et retourne la cle de chiffrement + salt dans la reponse
 pub async fn register_endpoint(
-    State((pool, jwt_secret)): State<(MySqlPool, String)>,
+    State((pool, jwt_secret)): State<(DbPool, String)>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<(StatusCode, Json<AuthResponse>), (StatusCode, Json<ApiError>)> {
     match db::get_user_by_email(&pool, &payload.email).await {
@@ -153,7 +152,7 @@ pub async fn register_endpoint(
 /// Endpoint POST /auth/login
 /// Reconstruit la cle AES a partir du salt persiste en base + passphrase fournie
 pub async fn login_endpoint(
-    State((pool, jwt_secret)): State<(MySqlPool, String)>,
+    State((pool, jwt_secret)): State<(DbPool, String)>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, (StatusCode, Json<ApiError>)> {
     let user = db::get_user_by_email(&pool, &payload.email)
@@ -215,7 +214,7 @@ pub async fn login_endpoint(
 /// Desormais deterministe : lit le salt depuis la DB au lieu d'en generer un nouveau
 /// Permet a un client de retrouver sa cle sans passer par le login
 pub async fn derive_keys_endpoint(
-    State((pool, _jwt_secret)): State<(MySqlPool, String)>,
+    State((pool, _jwt_secret)): State<(DbPool, String)>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<DerivedKeysResponse>, (StatusCode, Json<ApiError>)> {
     let user = db::get_user_by_email(&pool, &payload.email)
