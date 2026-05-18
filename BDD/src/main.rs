@@ -1,3 +1,6 @@
+//! Point d'entrée du serveur LifeTrack API
+//! Initialise la configuration, connecte la base de données et démarre le serveur HTTP
+
 mod api;
 mod auth;
 mod config;
@@ -6,6 +9,7 @@ mod errors;
 mod models;
 mod routes;
 mod utils;
+mod password;
 
 use axum::serve;
 use crate::config::load_config;
@@ -13,26 +17,32 @@ use crate::db::{connect_db, DbPool};
 use crate::routes::init_routes;
 use tokio::net::TcpListener;
 
+/// Point d'entrée principal asynchrone
+/// Lance le serveur HTTP sur http://127.0.0.1:3000
 #[tokio::main]
 async fn main() {
-    // 1. Charger la config
+    // Étape 1: Charger les variables de configuration (.env)
     let cfg = load_config();
+    let jwt_secret = cfg.jwt_secret.clone();
 
-    // 2. Se connecter à la base (création du pool)
+    // Étape 2: Établir la connexion à la base de données et créer le pool de connexions
     let pool: DbPool = connect_db(&cfg).await;
+    println!("✓ Connexion à la base de données réussie !");
 
-    println!("Connexion à la base réussie !");
+    // Étape 3: Construire l'application Axum avec toutes les routes
+    let app = init_routes(pool, jwt_secret);
 
-    // 3. Construire les routes HTTP
-    let app = init_routes(pool);
-
-    // 4. Démarrer le serveur HTTP
+    // Étape 4: Démarrer le serveur TCP qui écoute les requêtes HTTP
     let listener = TcpListener::bind("127.0.0.1:3000")
         .await
-        .expect("Impossible de démarrer le listener HTTP");
+        .expect("Impossible de démarrer le listener TCP sur 127.0.0.1:3000");
 
-    println!("Serveur lancé sur http://127.0.0.1:3000");
+    println!("🚀 Serveur LifeTrack lancé sur http://127.0.0.1:3000");
+    println!("   Authentification: POST /auth/register ou /auth/login");
+    println!("   Zero-Knowledge: POST /users/:user_id/encrypted");
+    
+    // Servir indéfiniment les requêtes entrantes
     serve(listener, app)
         .await
-        .expect("Erreur pendant l'exécution du serveur HTTP");
+        .expect("Erreur critique pendant l'exécution du serveur HTTP");
 }

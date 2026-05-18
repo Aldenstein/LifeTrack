@@ -4,8 +4,9 @@ use chrono::NaiveDate;
 
 use crate::models::ApiError;
 
-/// Parse une date au format YYYY-MM-DD.
-/// Centralisée ici pour éviter la duplication dans api.rs.
+/// Parse une date au format YYYY-MM-DD
+/// Valide le format et retourne une erreur HTTP 400 si invalide
+/// Centralisée ici pour éviter la duplication de code
 pub fn parse_date(date: &str) -> Result<NaiveDate, (StatusCode, Json<ApiError>)> {
     NaiveDate::parse_from_str(date, "%Y-%m-%d").map_err(|_| {
         (

@@ -2,16 +2,70 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+/// Réponse d'erreur générique envoyée aux clients
 #[derive(Debug, Serialize)]
 pub struct ApiError {
+    /// Message d'erreur lisible
     pub message: String,
 }
 
+// ── Authentification ─────────────────────────────────────────────────────────
+
+/// Requête d'inscription: email + passphrase
+#[derive(Debug, Deserialize)]
+pub struct RegisterRequest {
+    pub email: String,
+    pub passphrase: String,
+}
+
+/// Requête de connexion: email + passphrase
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub passphrase: String,
+}
+
+/// Réponse après authentification réussie
+#[derive(Debug, Serialize)]
+pub struct AuthResponse {
+    pub token: String,      // JWT token valide 7 jours
+    pub user_id: i32,       // ID utilisateur
+    pub email: String,      // Email confirmé
+}
+
+/// Données utilisateur récupérées de la base
+#[derive(Debug, Serialize, FromRow)]
+pub struct User {
+    pub usrid: i32,                 // ID utilisateur
+    pub email: String,              // Email de connexion
+    pub passphrase_hash: String,    // Hash Argon2 (jamais la passphrase en clair)
+    pub usrcreated_at: NaiveDateTime, // Timestamp création compte
+}
+
+/// Clés de chiffrement dérivées pour le client
+#[derive(Debug, Serialize)]
+pub struct DerivedKeysResponse {
+    pub encryption_key: String,  // Clé AES-256 encodée hex (32 bytes)
+    pub salt: String,             // Salt aléatoire encodé hex (16 bytes)
+}
+
+// ── JWT Claims ───────────────────────────────────────────────────────────────
+
+/// Données contenues dans le JWT token
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JwtClaims {
+    pub sub: String,  // ID utilisateur (subject)
+    pub email: String, // Email pour identification
+    pub iat: i64,     // Timestamp création (issued at)
+    pub exp: i64,     // Timestamp expiration (expiration)
+}
+
+/// Statut de santé du serveur
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HealthStatus {
-    pub status: String,
-    pub version: String,
-    pub timestamp: String,
+    pub status: String,      // "healthy" ou "unhealthy"
+    pub version: String,     // Version API
+    pub timestamp: String,   // ISO 8601 timestamp
 }
 
 #[derive(Debug, Serialize)]

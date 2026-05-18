@@ -1,4 +1,7 @@
-use axum::{routing::{get, post}, Router};
+// Module de définition des routes HTTP
+// Sépare les routes publiques (authentification) des routes protégées (JWT requis)
+
+use axum::{routing::{get, post}, Router, middleware};
 
 use crate::api::{
     active_alerts_and_reminders, api_info, create_account_endpoint, create_finance_type_endpoint,
@@ -8,18 +11,30 @@ use crate::api::{
     latest_module_values, log_alcohol_consumption_endpoint, log_body_measurement_endpoint,
     log_breathing_session_endpoint, log_hydration_endpoint, log_meal_endpoint, log_mood_endpoint,
     log_sleep_endpoint, log_sport_session_endpoint, mark_habit_complete_endpoint,
-    today_dashboard, user_profile,
+    today_dashboard, user_profile, get_current_user,
     // Zero-Knowledge
     save_encrypted_entry_endpoint,
     get_encrypted_entries_endpoint,
     get_all_encrypted_entries_endpoint,
 };
+use crate::auth::{register_endpoint, login_endpoint, derive_keys_endpoint, validate_jwt};
 use crate::db::DbPool;
 
-pub fn init_routes(pool: DbPool) -> Router {
+pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
+    let state = (pool.clone(), jwt_secret.clone());
+    let protected_state = (pool.clone(), jwt_secret);
+    
     Router::new()
+        // ── Routes publiques ────────────────────────────────────────────────
         .route("/health", get(health_check))
         .route("/api/info", get(api_info))
+        .route("/auth/register", post(register_endpoint))
+        .route("/auth/login", post(login_endpoint))
+        .route("/auth/derive-keys", post(derive_keys_endpoint))
+        .with_state(state)
+        
+        // ── Routes protégées par JWT ─────────────────────────────────────────
+        .route("/users/me/:user_id", get(get_current_user))
         .route("/users/:user_id/profile", get(user_profile))
         .route("/users/:user_id/dashboard/today", get(today_dashboard))
         .route("/users/:user_id/latest-module-values", get(latest_module_values))
@@ -68,5 +83,6 @@ pub fn init_routes(pool: DbPool) -> Router {
             "/users/:user_id/encrypted/all",
             get(get_all_encrypted_entries_endpoint),
         )
+        .layer(middleware::from_fn_with_state(protected_state, validate_jwt))
         .with_state(pool)
 }

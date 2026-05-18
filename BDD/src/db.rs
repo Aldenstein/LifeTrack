@@ -5,14 +5,59 @@ use chrono::NaiveDate;
 use crate::config::DbConfig;
 use crate::models::*;
 
+/// Type alias pour le pool de connexions MySQL
+/// Simplifie la signature des fonctions
 pub type DbPool = Pool<MySql>;
 
+/// Établit la connexion à la base de données et crée le pool de connexions
+/// Configuration: 5 connexions max simultanées pour éviter surcharge
 pub async fn connect_db(cfg: &DbConfig) -> DbPool {
     MySqlPoolOptions::new()
         .max_connections(5)
         .connect(&cfg.url)
         .await
         .expect("Impossible de se connecter à la base MariaDB/MySQL")
+}
+
+// ── Authentification : UTILISATEUR ──────────────────────────────────────────
+
+/// Crée un nouvel utilisateur avec email et hash passphrase
+pub async fn create_user(
+    pool: &DbPool,
+    email: &str,
+    passphrase_hash: &str,
+) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(
+        "INSERT INTO UTILISATEUR (email, passphrase_hash) VALUES (?, ?)",
+    )
+    .bind(email)
+    .bind(passphrase_hash)
+    .execute(pool)
+    .await?;
+
+    Ok(result.last_insert_id() as i32)
+}
+
+/// Récupère un utilisateur par email
+pub async fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<User>, sqlx::Error> {
+    sqlx::query_as::<_, User>(
+        "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at \
+         FROM UTILISATEUR WHERE email = ?",
+    )
+    .bind(email)
+    .fetch_optional(pool)
+    .await
+}
+
+/// Récupère un utilisateur par ID
+pub async fn get_user_by_id(pool: &DbPool, user_id: i32) -> Result<Option<User>, sqlx::Error> {
+    sqlx::query_as::<_, User>(
+        "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at \
+         FROM UTILISATEUR WHERE Usrid = ?",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
 }
 
 // ── Zero-Knowledge : DONNEE_CHIFFREE ────────────────────────────────────────

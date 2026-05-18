@@ -1,3 +1,7 @@
+// Module des endpoints HTTP
+// Contient tous les handlers pour les requêtes REST
+// Chaque fonction gère un endpoint spécifique
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -18,6 +22,7 @@ use crate::db::{
     create_todo,
     create_transaction,
     create_user,
+    get_user_by_id,
     get_active_alerts_and_reminders,
     get_latest_module_values,
     get_today_dashboard,
@@ -39,6 +44,9 @@ use crate::db::{
 use crate::models::*;
 use crate::utils::parse_date;
 
+// Helpers pour les erreurs - simplifient les réponses d'erreur
+
+/// Erreur lors du chargement du profil utilisateur
 fn user_profile_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
     (
         StatusCode::NOT_FOUND,
@@ -486,6 +494,33 @@ pub async fn get_all_encrypted_entries_endpoint(
         .await
         .map(Json)
         .map_err(encrypted_error)
+}
+
+/// GET /users/me
+/// Récupère le profil de l'utilisateur connecté (protégé par JWT)
+pub async fn get_current_user(
+    State(pool): State<DbPool>,
+    Path(user_id): Path<i32>,
+) -> Result<Json<User>, (StatusCode, Json<ApiError>)> {
+    get_user_by_id(&pool, user_id)
+        .await
+        .map_err(|_| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    message: "Database error".to_string(),
+                }),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    message: "User not found".to_string(),
+                }),
+            )
+        })
+        .map(Json)
 }
 
 pub async fn api_info() -> Json<ApiInfo> {
