@@ -10,7 +10,7 @@ use chrono::NaiveDate;
 use serde::Deserialize;
 
 use crate::db::*;
-use crate::models::ApiError;
+use crate::models::{ApiError, CarbTotal, FatTotal};
 use crate::utils::parse_date;
 
 // Helper for general GET errors
@@ -32,6 +32,38 @@ fn not_found() -> (StatusCode, Json<ApiError>) {
     )
 }
 
+// ── Query param structs ────────────────────────────────────────
+
+#[derive(Deserialize)]
+pub struct PeriodQuery {
+    pub start: String,
+    pub end: String,
+}
+
+#[derive(Deserialize)]
+pub struct TopExpensesQuery {
+    pub start: String,
+    pub end: String,
+    #[serde(default = "default_limit")]
+    pub limit: i32,
+}
+
+fn default_limit() -> i32 { 10 }
+
+#[derive(Deserialize)]
+pub struct LimitQuery {
+    #[serde(default = "default_limit")]
+    pub limit: i32,
+}
+
+#[derive(Deserialize)]
+pub struct DaysQuery {
+    #[serde(default = "default_days")]
+    pub days: i32,
+}
+
+fn default_days() -> i32 { 30 }
+
 // ── FINANCE endpoints ──────────────────────────────────────────
 
 pub async fn get_user_accounts_endpoint(
@@ -52,12 +84,6 @@ pub async fn get_finance_types_endpoint(
     State(pool): State<crate::db::DbPool>,
 ) -> Result<Json<Vec<FinanceType>>, (StatusCode, Json<ApiError>)> {
     get_finance_types(&pool).await.map(Json).map_err(get_error)
-}
-
-#[derive(Deserialize)]
-pub struct PeriodQuery {
-    start: String,
-    end: String,
 }
 
 pub async fn get_transactions_by_period_endpoint(
@@ -149,11 +175,11 @@ pub async fn get_upcoming_planned_expenses_endpoint(
 pub async fn get_top_expense_types_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-    Query(params): Query<PeriodQuery>,
+    Query(params): Query<TopExpensesQuery>,
 ) -> Result<Json<Vec<ExpenseTypeRanking>>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
-    get_top_expense_types(&pool, user_id, start, end)
+    get_top_expense_types(&pool, user_id, start, end, params.limit)
         .await
         .map(Json)
         .map_err(get_error)
@@ -263,11 +289,9 @@ pub async fn get_habit_completion_rate_endpoint(
 pub async fn get_most_consistent_habits_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-    Query(params): Query<PeriodQuery>,
+    Query(params): Query<LimitQuery>,
 ) -> Result<Json<Vec<HabitConsistency>>, (StatusCode, Json<ApiError>)> {
-    let start = parse_date(&params.start)?;
-    let end = parse_date(&params.end)?;
-    get_most_consistent_habits(&pool, user_id, start, end)
+    get_most_consistent_habits(&pool, user_id, params.limit)
         .await
         .map(Json)
         .map_err(get_error)
@@ -276,11 +300,9 @@ pub async fn get_most_consistent_habits_endpoint(
 pub async fn get_least_consistent_habits_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-    Query(params): Query<PeriodQuery>,
+    Query(params): Query<LimitQuery>,
 ) -> Result<Json<Vec<HabitConsistency>>, (StatusCode, Json<ApiError>)> {
-    let start = parse_date(&params.start)?;
-    let end = parse_date(&params.end)?;
-    get_least_consistent_habits(&pool, user_id, start, end)
+    get_least_consistent_habits(&pool, user_id, params.limit)
         .await
         .map(Json)
         .map_err(get_error)
@@ -319,11 +341,9 @@ pub async fn get_total_sobriety_duration_endpoint(
 pub async fn get_sobriety_stats_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-    Query(params): Query<PeriodQuery>,
+    Query(params): Query<DaysQuery>,
 ) -> Result<Json<SobrietyStats>, (StatusCode, Json<ApiError>)> {
-    let start = parse_date(&params.start)?;
-    let end = parse_date(&params.end)?;
-    get_sobriety_stats_by_period(&pool, user_id, start, end)
+    get_sobriety_stats_by_period(&pool, user_id, params.days)
         .await
         .map(Json)
         .map_err(get_error)
@@ -573,14 +593,14 @@ pub async fn get_today_protein_total_endpoint(
 pub async fn get_today_carb_total_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<CalorieTotal>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<CarbTotal>, (StatusCode, Json<ApiError>)> {
     get_today_carb_total(&pool, user_id).await.map(Json).map_err(get_error)
 }
 
 pub async fn get_today_fat_total_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<CalorieTotal>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<FatTotal>, (StatusCode, Json<ApiError>)> {
     get_today_fat_total(&pool, user_id).await.map(Json).map_err(get_error)
 }
 

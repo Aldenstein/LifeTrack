@@ -43,11 +43,11 @@ pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
         .route("/users/:user_id/latest-module-values", get(latest_module_values))
         .route("/users/:user_id/alerts-reminders", get(active_alerts_and_reminders))
         .route("/users", post(create_user_endpoint))
-        .route("/users/:user_id/accounts", post(create_account_endpoint))
-        .route("/finance/types", post(create_finance_type_endpoint))
+        .route("/users/:user_id/accounts", post(create_account_endpoint).get(get_user_accounts_endpoint))
+        .route("/finance/types", post(create_finance_type_endpoint).get(get_finance_types_endpoint))
         .route("/users/:user_id/transactions", post(create_transaction_endpoint))
-        .route("/users/:user_id/planned-expenses", post(create_planned_expense_endpoint))
-        .route("/habits/categories", post(create_habit_category_endpoint))
+        .route("/users/:user_id/planned-expenses", post(create_planned_expense_endpoint).get(get_planned_expenses_endpoint))
+        .route("/habits/categories", post(create_habit_category_endpoint).get(get_habit_categories_endpoint))
         .route("/users/:user_id/habits", post(create_habit_endpoint))
         .route(
             "/users/:user_id/habits/:habit_id/complete",
@@ -57,7 +57,7 @@ pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
             "/users/:user_id/sobriety-periods",
             post(create_sobriety_period_endpoint),
         )
-        .route("/mood/types", post(create_mood_type_endpoint))
+        .route("/mood/types", post(create_mood_type_endpoint).get(get_mood_types_endpoint))
         .route("/users/:user_id/moods", post(log_mood_endpoint))
         .route("/users/:user_id/hydration", post(log_hydration_endpoint))
         .route("/users/:user_id/sleep", post(log_sleep_endpoint))
@@ -66,7 +66,7 @@ pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
             "/users/:user_id/body-measurements",
             post(log_body_measurement_endpoint),
         )
-        .route("/sport/types", post(create_sport_type_endpoint))
+        .route("/sport/types", post(create_sport_type_endpoint).get(get_sport_types_endpoint))
         .route("/users/:user_id/sport-sessions", post(log_sport_session_endpoint))
         .route(
             "/users/:user_id/breathing-sessions",
@@ -88,22 +88,18 @@ pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
         )
         
         // ── FINANCE GET routes ─────────────────────────────────────────────
-        .route("/users/:user_id/accounts", get(get_user_accounts_endpoint))
         .route("/users/:user_id/account-balances", get(get_account_balances_endpoint))
-        .route("/finance/types", get(get_finance_types_endpoint))
         .route("/users/:user_id/transactions/period", get(get_transactions_by_period_endpoint))
         .route("/users/:user_id/transactions/account/:account_id", get(get_transactions_by_account_endpoint))
         .route("/users/:user_id/transactions/type/:type_id", get(get_transactions_by_type_endpoint))
         .route("/users/:user_id/income/period", get(get_income_total_by_period_endpoint))
         .route("/users/:user_id/expenses/period", get(get_expense_total_by_period_endpoint))
         .route("/users/:user_id/balance/period", get(get_net_balance_by_period_endpoint))
-        .route("/users/:user_id/planned-expenses", get(get_planned_expenses_endpoint))
         .route("/users/:user_id/planned-expenses/upcoming", get(get_upcoming_planned_expenses_endpoint))
         .route("/users/:user_id/top-expenses", get(get_top_expense_types_endpoint))
         .route("/users/:user_id/balance-history", get(get_balance_history_endpoint))
         
         // ── HABIT GET routes ───────────────────────────────────────────────
-        .route("/habits/categories", get(get_habit_categories_endpoint))
         .route("/users/:user_id/habits/active", get(get_active_habits_endpoint))
         .route("/users/:user_id/habits/positive", get(get_positive_habits_endpoint))
         .route("/users/:user_id/habits/negative", get(get_negative_habits_endpoint))
@@ -126,7 +122,6 @@ pub fn init_routes(pool: DbPool, jwt_secret: String) -> Router {
         .route("/users/:user_id/sobriety/stats", get(get_sobriety_stats_by_period_endpoint))
         
         // ── MOOD GET routes ────────────────────────────────────────────────
-        .route("/mood/types", get(get_mood_types_endpoint))
         .route("/users/:user_id/moods/today", get(get_today_mood_endpoint))
         .route("/users/:user_id/moods/by-date", get(get_mood_by_date_endpoint))
         .route("/users/:user_id/moods/monthly", get(get_monthly_moods_endpoint))

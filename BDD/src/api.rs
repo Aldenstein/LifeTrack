@@ -435,7 +435,7 @@ pub async fn create_todo_endpoint(
         Some(value) => Some(parse_date(value)?),
         None => None,
     };
-    let id = create_todo(&pool, user_id, &payload.title, payload.description.as_deref(), None)
+    let id = create_todo(&pool, user_id, &payload.title, payload.description.as_deref(), _due_date)
         .await
         .map_err(today_dashboard_error)?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))

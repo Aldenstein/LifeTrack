@@ -40,6 +40,18 @@ pub async fn create_user(
     Ok(result.last_insert_id() as i32)
 }
 
+/// Crée un utilisateur public (sans passphrase) via UsrpublicId
+pub async fn create_public_user(pool: &DbPool, public_id: &str) -> Result<i32, sqlx::Error> {
+    let result = sqlx::query(
+        "INSERT INTO UTILISATEUR (UsrpublicId) VALUES (?)",
+    )
+    .bind(public_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.last_insert_id() as i32)
+}
+
 /// Récupère un utilisateur par email
 pub async fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>(
@@ -203,30 +215,18 @@ pub async fn get_today_dashboard(
 pub async fn get_latest_module_values(pool: &DbPool, user_id: i32) -> Result<Vec<LatestModuleValues>, sqlx::Error> {
     sqlx::query_as::<_, LatestModuleValues>(
         r#"
-        SELECT 'HYDRATATION' AS module_name, 'water_total' AS metric_name,
-               CAST(h.Hydquantite AS CHAR) AS metric_value, CAST(h.Hyddate AS CHAR) AS metric_date
-        FROM HYDRATATION h
-        WHERE h.Usrid = ?
-        ORDER BY h.Hyddate DESC, h.Hydid DESC
-        LIMIT 1
+        (SELECT 'HYDRATATION' AS module_name, 'water_total' AS metric_name,
+                CAST(h.Hydquantite AS CHAR) AS metric_value, CAST(h.Hyddate AS CHAR) AS metric_date
+         FROM HYDRATATION h WHERE h.Usrid = ? ORDER BY h.Hyddate DESC, h.Hydid DESC LIMIT 1)
         UNION ALL
-        SELECT 'SOMMEIL', 'sleep_duration', CAST(s.Somduree AS CHAR), CAST(s.Somdate AS CHAR)
-        FROM SOMMEIL s
-        WHERE s.Usrid = ?
-        ORDER BY s.Somdate DESC, s.Somid DESC
-        LIMIT 1
+        (SELECT 'SOMMEIL', 'sleep_duration', CAST(s.Somduree AS CHAR), CAST(s.Somdate AS CHAR)
+         FROM SOMMEIL s WHERE s.Usrid = ? ORDER BY s.Somdate DESC, s.Somid DESC LIMIT 1)
         UNION ALL
-        SELECT 'REPAS', 'calories', CAST(r.Repcalories AS CHAR), CAST(r.Repdate AS CHAR)
-        FROM REPAS r
-        WHERE r.Usrid = ?
-        ORDER BY r.Repdate DESC, r.Repid DESC
-        LIMIT 1
+        (SELECT 'REPAS', 'calories', CAST(r.Repcalories AS CHAR), CAST(r.Repdate AS CHAR)
+         FROM REPAS r WHERE r.Usrid = ? ORDER BY r.Repdate DESC, r.Repid DESC LIMIT 1)
         UNION ALL
-        SELECT 'SEANCE_SPORT', 'calories', CAST(s.Seacalories AS CHAR), CAST(s.Seadate AS CHAR)
-        FROM SEANCE_SPORT s
-        WHERE s.Usrid = ?
-        ORDER BY s.Seadate DESC, s.Seaid DESC
-        LIMIT 1
+        (SELECT 'SEANCE_SPORT', 'calories', CAST(s.Seacalories AS CHAR), CAST(s.Seadate AS CHAR)
+         FROM SEANCE_SPORT s WHERE s.Usrid = ? ORDER BY s.Seadate DESC, s.Seaid DESC LIMIT 1)
         "#,
     )
     .bind(user_id)
@@ -265,7 +265,7 @@ pub async fn get_active_alerts_and_reminders(pool: &DbPool, user_id: i32) -> Res
           AND s.Somduree IS NOT NULL
           AND s.Somduree < 420
         UNION ALL
-        SELECT 'DATE_HUMEUR', dh.Usrid, dh.DHdate
+        SELECT 'DATE_HUMEUR', dh.DHid, dh.DHdate
         FROM DATE_HUMEUR dh
         WHERE dh.Usrid = ?
           AND dh.DHdate = CURDATE()
@@ -1294,9 +1294,10 @@ pub async fn get_short_sleep_entries(pool: &DbPool, user_id: i32, min_duration: 
 pub async fn get_today_meals(pool: &DbPool, user_id: i32) -> Result<Vec<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
-               r.Repglucides AS repglucides, r.Replipides AS replipides
+         SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+             r.Repdescription AS repdescription,
+             r.Repcalories AS repcalories, r.Repproteines AS repproteines,
+             r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
           AND r.Repdate = CURDATE()
@@ -1316,9 +1317,10 @@ pub async fn get_meals_by_period(
 ) -> Result<Vec<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
-               r.Repglucides AS repglucides, r.Replipides AS replipides
+         SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+             r.Repdescription AS repdescription,
+             r.Repcalories AS repcalories, r.Repproteines AS repproteines,
+             r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
           AND r.Repdate BETWEEN ? AND ?
@@ -1335,9 +1337,10 @@ pub async fn get_meals_by_period(
 pub async fn get_latest_meal(pool: &DbPool, user_id: i32) -> Result<Option<Meal>, sqlx::Error> {
     sqlx::query_as::<_, Meal>(
         r#"
-        SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
-               r.Repcalories AS repcalories, r.Repproteines AS repproteines,
-               r.Repglucides AS repglucides, r.Replipides AS replipides
+         SELECT r.Repid AS repid, r.Usrid AS usrid, r.Repdate AS repdate,
+             r.Repdescription AS repdescription,
+             r.Repcalories AS repcalories, r.Repproteines AS repproteines,
+             r.Repglucides AS repglucides, r.Replipides AS replipides
         FROM REPAS r
         WHERE r.Usrid = ?
         ORDER BY r.Repdate DESC, r.Repid DESC
@@ -1377,10 +1380,10 @@ pub async fn get_today_protein_total(pool: &DbPool, user_id: i32) -> Result<Prot
     .await
 }
 
-pub async fn get_today_carb_total(pool: &DbPool, user_id: i32) -> Result<CalorieTotal, sqlx::Error> {
-    sqlx::query_as::<_, CalorieTotal>(
+pub async fn get_today_carb_total(pool: &DbPool, user_id: i32) -> Result<CarbTotal, sqlx::Error> {
+    sqlx::query_as::<_, CarbTotal>(
         r#"
-        SELECT COALESCE(SUM(r.Repglucides), 0) AS calorie_total
+        SELECT COALESCE(SUM(r.Repglucides), 0) AS carb_total
         FROM REPAS r
         WHERE r.Usrid = ?
           AND r.Repdate = CURDATE()
@@ -1391,10 +1394,10 @@ pub async fn get_today_carb_total(pool: &DbPool, user_id: i32) -> Result<Calorie
     .await
 }
 
-pub async fn get_today_fat_total(pool: &DbPool, user_id: i32) -> Result<CalorieTotal, sqlx::Error> {
-    sqlx::query_as::<_, CalorieTotal>(
+pub async fn get_today_fat_total(pool: &DbPool, user_id: i32) -> Result<FatTotal, sqlx::Error> {
+    sqlx::query_as::<_, FatTotal>(
         r#"
-        SELECT COALESCE(SUM(r.Replipides), 0) AS calorie_total
+        SELECT COALESCE(SUM(r.Replipides), 0) AS fat_total
         FROM REPAS r
         WHERE r.Usrid = ?
           AND r.Repdate = CURDATE()
@@ -1492,7 +1495,7 @@ pub async fn get_latest_body_measurement(pool: &DbPool, user_id: i32) -> Result<
         r#"
         SELECT m.Mesid AS mesid, m.Usrid AS usrid, m.Mesdate AS mesdate,
                m.Mespoids AS mespoids, m.Mestaille AS mestaille,
-               m.MesIMC AS mesIMC, m.MesMetaBasal AS mesMetaBasal
+               m.MesIMC AS mes_imc, m.MesMetaBasal AS mes_meta_basal
         FROM MESURE_CORPORELLE m
         WHERE m.Usrid = ?
         ORDER BY m.Mesdate DESC, m.Mesid DESC
@@ -1563,7 +1566,7 @@ pub async fn get_weight_progress(pool: &DbPool, user_id: i32) -> Result<Option<W
 pub async fn get_current_bmi(pool: &DbPool, user_id: i32) -> Result<Option<CurrentBmi>, sqlx::Error> {
     sqlx::query_as::<_, CurrentBmi>(
         r#"
-        SELECT m.MesIMC AS mesIMC
+        SELECT m.MesIMC AS mes_imc
         FROM MESURE_CORPORELLE m
         WHERE m.Usrid = ?
         ORDER BY m.Mesdate DESC, m.Mesid DESC

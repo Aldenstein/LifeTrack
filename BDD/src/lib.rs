@@ -22,8 +22,6 @@ pub mod models;
 pub mod routes;
 /// Fonctions utilitaires
 pub mod utils;
-/// Hashing et dérivation de clés (Argon2, PBKDF2)
-pub mod password;
 
 /// Réexporte publiquement tous les modèles
 pub use models::*;

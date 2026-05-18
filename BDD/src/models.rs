@@ -249,16 +249,6 @@ pub struct EncryptedPayloadRequest {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PassphraseSetupRequest {
-    pub passphrase: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LocalDecryptRequest {
-    pub iv: String,
-    pub ciphertext: String,
-    pub passphrase: String,
-}
 
 /// Ligne retournée depuis la table DONNEE_CHIFFREE.
 /// Le serveur ne connaît jamais le contenu en clair.
@@ -585,6 +575,16 @@ pub struct ProteinTotal {
 }
 
 #[derive(Debug, Serialize, FromRow)]
+pub struct CarbTotal {
+    pub carb_total: f64,
+}
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct FatTotal {
+    pub fat_total: f64,
+}
+
+#[derive(Debug, Serialize, FromRow)]
 pub struct MacroDistribution {
     pub proteins: f64,
     pub carbs: f64,
@@ -612,8 +612,10 @@ pub struct BodyMeasurement {
     pub mesdate: NaiveDate,
     pub mespoids: f64,
     pub mestaille: Option<f64>,
-    pub mesIMC: Option<f64>,
-    pub mesMetaBasal: Option<f64>,
+    #[sqlx(rename = "mesIMC")]
+    pub mes_imc: Option<f64>,
+    #[sqlx(rename = "mesMetaBasal")]
+    pub mes_meta_basal: Option<f64>,
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -631,7 +633,8 @@ pub struct WeightProgress {
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct CurrentBmi {
-    pub mesIMC: Option<f64>,
+    #[sqlx(rename = "mesIMC")]
+    pub mes_imc: Option<f64>,
 }
 
 #[derive(Debug, Serialize, FromRow)]
