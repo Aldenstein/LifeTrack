@@ -123,7 +123,7 @@ pub async fn get_income_total_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<IncomeSummary>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<IncomeTotal>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_income_total_by_period(&pool, user_id, start, end)
@@ -136,7 +136,7 @@ pub async fn get_expense_total_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<ExpenseSummary>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<ExpenseTotal>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_expense_total_by_period(&pool, user_id, start, end)
@@ -149,7 +149,7 @@ pub async fn get_net_balance_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<BalanceSummary>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<NetBalance>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_net_balance_by_period(&pool, user_id, start, end)
@@ -615,7 +615,7 @@ pub async fn get_nutrition_history_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<Vec<NutritionEntry>>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<NutritionHistory>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_nutrition_history(&pool, user_id, start, end)
@@ -658,7 +658,7 @@ pub async fn get_weight_chart_data_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<Vec<WeightChartData>>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<Vec<WeightEntry>>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_weight_chart_data(&pool, user_id, start, end)
@@ -797,7 +797,7 @@ pub async fn get_sport_chart_data_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<Vec<SportChartData>>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<SportDurationTotal>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_sport_chart_data(&pool, user_id, start, end)
