@@ -248,8 +248,6 @@ pub struct EncryptedPayloadRequest {
     pub version: i32,
 }
 
-#[derive(Debug, Deserialize)]
-
 /// Ligne retournée depuis la table DONNEE_CHIFFREE.
 /// Le serveur ne connaît jamais le contenu en clair.
 #[derive(Debug, Serialize, FromRow)]

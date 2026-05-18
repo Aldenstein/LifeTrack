@@ -2008,18 +2008,6 @@ pub async fn get_time_until_sobriety(pool: &DbPool, user_id: i32) -> Result<Opti
     .await
 }
 
-use chrono::NaiveDate;
-use sqlx;
-use crate::db::DbPool;
-
-pub async fn create_user(pool: &DbPool, public_id: &str) -> Result<i32, sqlx::Error> {
-    let result = sqlx::query(r#"INSERT INTO UTILISATEUR (UsrpublicId) VALUES (?)"#)
-        .bind(public_id)
-        .execute(pool)
-        .await?;
-    Ok(result.last_insert_id() as i32)
-}
-
 pub async fn create_account(pool: &DbPool, user_id: i32, name: &str, balance: f64) -> Result<i32, sqlx::Error> {
     let result = sqlx::query(r#"INSERT INTO COMPTE (Comnom, Comsolde, Usrid) VALUES (?, ?, ?)"#)
         .bind(name)

@@ -6,11 +6,10 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chrono::NaiveDate;
 use serde::Deserialize;
 
 use crate::db::*;
-use crate::models::{ApiError, CarbTotal, FatTotal};
+use crate::models::*;
 use crate::utils::parse_date;
 
 // Helper for general GET errors
