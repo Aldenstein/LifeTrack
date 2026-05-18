@@ -21,7 +21,7 @@ use crate::db::{
     create_sport_type,
     create_todo,
     create_transaction,
-    create_user,
+    create_public_user,
     get_user_by_id,
     get_active_alerts_and_reminders,
     get_latest_module_values,
@@ -140,7 +140,7 @@ pub async fn create_user_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateUserRequest>,
 ) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_user(&pool, &payload.public_id)
+    let id = create_public_user(&pool, &payload.public_id)
         .await
         .map_err(today_dashboard_error)?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
