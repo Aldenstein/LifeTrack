@@ -22,3 +22,6 @@ hex = "0.4"
 sha2 = "0.10"
 pbkdf2 = { version = "0.12", features = ["hmac"] }
 hmac = "0.12"
+
+[dev-dependencies]
+aes-gcm = "0.10"

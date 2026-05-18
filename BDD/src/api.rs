@@ -7,7 +7,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use chrono::{Local, NaiveDate};
+use chrono::Local;
 use serde::Deserialize;
 
 use crate::db::{
@@ -130,10 +130,6 @@ pub async fn health_check() -> Json<HealthStatus> {
         version: "1.0.0".to_string(),
         timestamp: Local::now().to_rfc3339(),
     })
-}
-
-pub fn start_api() {
-    println!("API started");
 }
 
 pub async fn create_user_endpoint(

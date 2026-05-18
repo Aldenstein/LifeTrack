@@ -22,15 +22,6 @@ fn get_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
     )
 }
 
-fn not_found() -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::NOT_FOUND,
-        Json(ApiError {
-            message: "Resource not found".to_string(),
-        }),
-    )
-}
-
 // ── Query param structs ────────────────────────────────────────
 
 #[derive(Deserialize)]
