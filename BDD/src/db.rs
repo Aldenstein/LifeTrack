@@ -26,12 +26,14 @@ pub async fn create_user(
     pool: &DbPool,
     email: &str,
     passphrase_hash: &str,
+             encryption_salt: &str,
 ) -> Result<i32, sqlx::Error> {
     let result = sqlx::query(
-        "INSERT INTO UTILISATEUR (email, passphrase_hash) VALUES (?, ?)",
+                "INSERT INTO UTILISATEUR (email, passphrase_hash, encryption_salt) VALUES (?, ?, ?)",
     )
     .bind(email)
     .bind(passphrase_hash)
+    .bind(encryption_salt)
     .execute(pool)
     .await?;
 
@@ -41,7 +43,7 @@ pub async fn create_user(
 /// Récupère un utilisateur par email
 pub async fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>(
-        "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at \
+                    "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at, encryption_salt \
          FROM UTILISATEUR WHERE email = ?",
     )
     .bind(email)
@@ -52,7 +54,7 @@ pub async fn get_user_by_email(pool: &DbPool, email: &str) -> Result<Option<User
 /// Récupère un utilisateur par ID
 pub async fn get_user_by_id(pool: &DbPool, user_id: i32) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>(
-        "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at \
+                "SELECT Usrid as usrid, email, passphrase_hash, UsrcreatedAt as usrcreated_at, encryption_salt \
          FROM UTILISATEUR WHERE Usrid = ?",
     )
     .bind(user_id)

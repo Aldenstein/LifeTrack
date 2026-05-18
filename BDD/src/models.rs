@@ -31,6 +31,8 @@ pub struct AuthResponse {
     pub token: String,      // JWT token valide 7 jours
     pub user_id: i32,       // ID utilisateur
     pub email: String,      // Email confirmé
+    pub encryption_key: Option<String>, // Clé AES-256 retournée au client (jamais stockée)
+    pub encryption_salt: Option<String>, // Salt hex persisté en base
 }
 
 /// Données utilisateur récupérées de la base
@@ -40,6 +42,7 @@ pub struct User {
     pub email: String,              // Email de connexion
     pub passphrase_hash: String,    // Hash Argon2 (jamais la passphrase en clair)
     pub usrcreated_at: NaiveDateTime, // Timestamp création compte
+    pub encryption_salt: Option<String>, // Salt hex pour dérivation clé AES-256
 }
 
 /// Clés de chiffrement dérivées pour le client

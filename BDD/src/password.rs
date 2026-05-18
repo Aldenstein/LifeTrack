@@ -3,7 +3,8 @@ use argon2::{
     Argon2,
 };
 use rand::Rng;
-use sha2::{Sha256, Digest};
+use pbkdf2::pbkdf2_hmac;
+use sha2::Sha256;
 use hex;
 
 /// Hash une passphrase avec Argon2
@@ -11,7 +12,7 @@ use hex;
 pub fn hash_passphrase(passphrase: &str) -> Result<String, String> {
     let salt = SaltString::generate(rand::thread_rng());
     let argon2 = Argon2::default();
-    
+
     argon2
         .hash_password(passphrase.as_bytes(), &salt)
         .map(|hash| hash.to_string())
@@ -24,7 +25,7 @@ pub fn verify_passphrase(passphrase: &str, hash: &str) -> Result<bool, String> {
     let parsed_hash = PasswordHash::new(hash)
         .map_err(|e| format!("Failed to parse hash: {}", e))?;
     let argon2 = Argon2::default();
-    
+
     argon2
         .verify_password(passphrase.as_bytes(), &parsed_hash)
         .map(|_| true)
@@ -32,18 +33,16 @@ pub fn verify_passphrase(passphrase: &str, hash: &str) -> Result<bool, String> {
 }
 
 /// Dérive une clé de chiffrement AES-256 (32 bytes) à partir de la passphrase
-/// Utilise PBKDF2 avec SHA256 et un salt fourni
-/// La clé est identique côté client et serveur (fonction déterministe)
+/// Utilise PBKDF2-HMAC-SHA256 avec 100 000 itérations (recommandation OWASP 2024)
+/// La clé est déterministe : même passphrase + même salt => même clé
 pub fn derive_encryption_key(passphrase: &str, salt: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(passphrase.as_bytes());
-    hasher.update(salt);
-    let hash = hasher.finalize();
-    hex::encode(&hash[..32])
+    let mut key = [0u8; 32];
+    pbkdf2_hmac::<Sha256>(passphrase.as_bytes(), salt, 100_000, &mut key);
+    hex::encode(key)
 }
 
 /// Génère un salt aléatoire sécurisé (16 bytes)
-/// Utilisé pour la dérivation de clés de chiffrement
+/// Utilisé UNE SEULE FOIS à la création du compte, puis persisté en base
 pub fn generate_salt() -> Vec<u8> {
     let mut rng = rand::thread_rng();
     let mut salt = vec![0u8; 16];
