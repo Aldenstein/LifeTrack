@@ -12,6 +12,7 @@ CREATE TABLE UTILISATEUR (
     Usrid        INT      NOT NULL AUTO_INCREMENT,
     UsrpublicId  CHAR(64) NOT NULL,
     UsrcreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    encryption_salt VARCHAR(32) NULL COMMENT 'Salt hex 16 bytes pour derivation PBKDF2-HMAC-SHA256 cle AES-256',
     PRIMARY KEY (Usrid),
     UNIQUE (UsrpublicId)
 );
