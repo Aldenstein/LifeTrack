@@ -175,7 +175,7 @@ pub async fn get_top_expense_types_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<TopExpensesQuery>,
-) -> Result<Json<Vec<ExpenseTypeRanking>>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<Vec<TopExpenseType>>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_top_expense_types(&pool, user_id, start, end, params.limit)
@@ -726,7 +726,7 @@ pub async fn get_total_sport_duration_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<SportDurationStats>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<SportDurationTotal>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_total_sport_duration_by_period(&pool, user_id, start, end)
@@ -739,7 +739,7 @@ pub async fn get_sport_session_count_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<SportCountStats>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<SportSessionCount>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_sport_session_count_by_period(&pool, user_id, start, end)
@@ -752,7 +752,7 @@ pub async fn get_burned_calories_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<SportCaloriesStats>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<BurnedCalories>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_burned_calories_by_period(&pool, user_id, start, end)
@@ -838,7 +838,7 @@ pub async fn get_total_breathing_duration_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<BreathingDurationStats>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<BreathingDurationTotal>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_total_breathing_duration_by_period(&pool, user_id, start, end)
@@ -851,7 +851,7 @@ pub async fn get_breathing_session_count_by_period_endpoint(
     State(pool): State<crate::db::DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<PeriodQuery>,
-) -> Result<Json<BreathingCountStats>, (StatusCode, Json<ApiError>)> {
+) -> Result<Json<BreathingSessionCount>, (StatusCode, Json<ApiError>)> {
     let start = parse_date(&params.start)?;
     let end = parse_date(&params.end)?;
     get_breathing_session_count_by_period(&pool, user_id, start, end)
