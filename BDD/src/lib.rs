@@ -1,6 +1,12 @@
 //! # LifeTrack API Backend
 //! Serveur REST pour la gestion du suivi de vie personnelle
 //! Inclut authentification par passphrase, chiffrement Zero-Knowledge et dashboards
+//!
+//! Description (FR):
+//! Ce crate regroupe les modules nécessaires au backend: définition des
+//! routes, handlers, accès à la base de données, authentification et
+//! utilitaires. Il est organisé pour séparer clairement la logique HTTP
+//! (module `api` / `routes`) de la logique métier/stockage (module `db`).
 
 /// Gestion des endpoints HTTP
 pub mod api;

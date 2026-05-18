@@ -1,6 +1,18 @@
 // Module des endpoints HTTP
-// Contient tous les handlers pour les requêtes REST
-// Chaque fonction gère un endpoint spécifique
+//
+// Description (FR):
+// Contient les handlers qui reçoivent les requêtes HTTP, valident
+///désérialisent les payloads JSON, convertissent les paramètres (dates,
+// ids) et invoquent la couche `db` pour effectuer les opérations.
+// Les handlers standardisent les réponses d'erreur via des helpers
+// (ex: `today_dashboard_error`) et renvoient des `StatusCode`/JSON.
+//
+// Conventions:
+// - Les endpoints `create_*` retournent `StatusCode::CREATED` et
+//   un `CreatedResponse` contenant l'ID créé.
+// - Les endpoints `log_*` et `mark_*` retournent `NO_CONTENT` ou `CREATED`
+//   suivant l'opération.
+// - La validation des dates est centralisée via `utils::parse_date`.
 
 use axum::{
     extract::{Path, Query, State},

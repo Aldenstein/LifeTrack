@@ -1,5 +1,16 @@
 // Module de définition des routes HTTP
-// Sépare les routes publiques (authentification) des routes protégées (JWT requis)
+//
+// Description (FR):
+// Ce fichier centralise la construction de la `Router` Axum utilisée par
+// l'application. Il expose la fonction `init_routes` qui assemble toutes
+// les routes publiques et protégées, associe les handlers définis dans
+// `api` et `api_get_endpoints`, et applique le middleware JWT pour
+// sécuriser les routes nécessitant une authentification.
+//
+// Conventions:
+// - Routes publiques: endpoints d'authentification et informations générales.
+// - Routes protégées: toutes les routes manipulant des données utilisateur
+//   (avec `validate_jwt` middleware).
 
 use axum::{routing::{get, post}, Router, middleware};
 

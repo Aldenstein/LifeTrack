@@ -1,3 +1,10 @@
+// Module utilitaires
+//
+// Description (FR):
+// Fonctions utilitaires réutilisables par les handlers et la couche DB.
+// Actuellement contient des helpers de parsing/validation (dates), mais
+// peut être étendu pour d'autres utilitaires transverses.
+
 use axum::http::StatusCode;
 use axum::Json;
 use chrono::NaiveDate;

@@ -1,5 +1,19 @@
 // GET endpoints for all read-only database functions
 // Organized by domain: Finance, Habits, Sobriety, Mood, Hydration, Sleep, Meals, Body, Sport, Breathing, Alcohol
+//
+// Description (FR):
+// Ce fichier expose les handlers HTTP en lecture seule pour l'API.
+// Chaque fonction fait l'intermédiaire entre la requête HTTP (extraction
+// des paramètres, parsing des dates) et les fonctions de la couche
+// `db` qui effectuent les requêtes SQL. Les erreurs de base de données
+// sont normalisées via `get_error` et renvoyées sous forme JSON.
+//
+// Conventions:
+// - Les structures `Query` servent à désérialiser les paramètres GET.
+// - Les endpoints convertissent souvent des chaînes de dates via
+//   `utils::parse_date` avant d'appeler les fonctions `db`.
+// - Les endpoints retournent `Result<Json<T>, (StatusCode, Json<ApiError>)>`
+//   pour uniformiser les réponses et les codes HTTP.
 
 use axum::{
     extract::{Path, Query, State},

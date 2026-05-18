@@ -1,3 +1,10 @@
+-- Script SQL complet pour créer la base `lifetrack` et ses tables.
+-- Description (FR):
+-- Ce fichier crée la structure complète de la base de données utilisée
+-- par l'application LifeTrack: utilisateurs, modules (finance, hydratation,
+-- sommeil, repas, sport, humeur, etc.). Les commentaires précisent les
+-- conventions de colonnes et les calculs faits côté applicatif.
+
 CREATE DATABASE IF NOT EXISTS lifetrack
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;

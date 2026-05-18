@@ -1,3 +1,12 @@
+// Accès à la base de données (DB layer)
+//
+// Description (FR):
+// Ce module centralise toutes les opérations SQL exécutées via `sqlx`.
+// Il expose des fonctions asynchrones réutilisables pour la lecture et
+// l'écriture des différentes entités (utilisateur, finances, hydratation,
+// sommeil, repas, sport, etc.). Les fonctions retournent des `Result`
+// contenant les modèles définis dans `models.rs`.
+
 use sqlx::{Pool, MySql};
 use sqlx::mysql::MySqlPoolOptions;
 use chrono::NaiveDate;

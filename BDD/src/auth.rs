@@ -1,3 +1,10 @@
+// Authentification et middlewares JWT
+//
+// Description (FR):
+// Ce module gère l'authentification: génération/validation de JWT,
+// dérivation de clés, et le middleware `validate_jwt` utilisé pour protéger
+// les routes nécessitant un utilisateur authentifié.
+
 use axum::{
     extract::{Request, State},
     http::StatusCode,

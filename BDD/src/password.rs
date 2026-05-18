@@ -1,3 +1,11 @@
+// Module de gestion des mots de passe et dérivation de clés
+//
+// Description (FR):
+// Fonctions utilitaires pour hachage de passphrase (Argon2), vérification
+// de passphrase, génération de salt sécurisé, et dérivation de clé de
+// chiffrement via PBKDF2. Conçu pour respecter les bonnes pratiques de
+// sécurité: salts aléatoires, itérations élevées pour PBKDF2.
+
 use argon2::{
     password_hash::{SaltString, PasswordHasher, PasswordHash, PasswordVerifier},
     Argon2,

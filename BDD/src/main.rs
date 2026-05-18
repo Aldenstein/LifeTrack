@@ -1,5 +1,10 @@
 //! Point d'entrée du serveur LifeTrack API
 //! Initialise la configuration, connecte la base de données et démarre le serveur HTTP
+//!
+//! Description (FR):
+//! Ce binaire initialise la configuration via `load_config`, établit
+//! le pool de connexions DB, construit la `Router` via `init_routes`
+//! et démarre le listener TCP sur `127.0.0.1:3000`.
 
 mod api;
 mod api_get_endpoints;

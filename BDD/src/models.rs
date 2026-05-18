@@ -1,3 +1,11 @@
+// Modèles de données et structures de requête/réponse
+//
+// Description (FR):
+// Ce fichier définit toutes les structures (Request/Response) utilisées
+// par l'API ainsi que les mapping vers les lignes SQL via `FromRow`.
+// Il contient les types sérialisables envoyés au client et les types
+// désérialisables reçus en payload JSON.
+
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

@@ -1,6 +1,10 @@
 [package]
+# Package: lifetrackdb
+# Description (FR): crate backend pour l'API LifeTrack.
+# Contient les dépendances nécessaires pour exécuter le serveur HTTP,
+# l'accès MySQL via `sqlx`, la sérialisation `serde`, et l'authentification JWT.
 name = "lifetrackdb"
-version = "1.1.0"
+version = "3.1.2"
 edition = "2021"
 
 [dependencies]
