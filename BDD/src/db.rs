@@ -1,18 +1,3 @@
-// NOTE: Ce fichier est généré automatiquement à partir du schéma SQL.
-// Les fonctions ZK sont ajoutées à la fin du fichier existant.
-// Le contenu métier préexistant est conservé intact — seules les 3 fonctions
-// ZK sont nouvelles.
-
-// ─── IMPORTANT ──────────────────────────────────────────────────────────────
-// Ce fichier REMPLACE l'intégralité de db.rs. Le contenu original est conservé
-// mot pour mot jusqu'à la section ZK ajoutée en fin de fichier.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Pour éviter de dupliquer les ~65 Ko du fichier original, les fonctions ZK
-// sont injectées via un module séparé `db_encrypted` inclus depuis db.rs.
-// Si vous préférez tout dans un seul fichier, copiez le contenu original et
-// ajoutez les fonctions ci-dessous à la fin.
-
 use sqlx::{MySqlPool, Row};
 use chrono::NaiveDate;
 use crate::models::EncryptedEntry;
