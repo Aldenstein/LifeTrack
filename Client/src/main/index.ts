@@ -3,8 +3,6 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-
-
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -25,7 +23,9 @@ function createWindow(): void {
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
-    return { action: 'deny' }
+    return {
+      action: 'deny'
+    }
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -52,18 +52,23 @@ app.whenReady().then(() => {
   })
 
   // Set CSP headers to allow fetch requests to the LifeTrack API
+  // 'unsafe-eval' est requis par Vite en dev (HMR) et par React
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "default-src 'self'; connect-src 'self' https://lifetrack.chocsathan.fr; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+          "default-src 'self'; " +
+          "connect-src 'self' https://lifetrack.chocsathan.fr ws://localhost:*; " +
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+          "style-src 'self' 'unsafe-inline'; " +
+          "font-src 'self' data:; " +
+          "img-src 'self' data:"
         ]
       }
     })
   })
 
-  // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
   createWindow()
@@ -76,13 +81,10 @@ app.whenReady().then(() => {
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
+// for applications and their menu item to remain active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
