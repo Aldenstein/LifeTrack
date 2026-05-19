@@ -957,7 +957,7 @@ dependencies = [
 
 [[package]]
 name = "lifetrackdb"
-version = "1.1.0"
+version = "3.1.2"
 dependencies = [
  "aes-gcm",
  "argon2",
