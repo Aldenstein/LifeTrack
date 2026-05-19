@@ -22,6 +22,8 @@ use crate::config::load_config;
 use crate::db::{connect_db, DbPool};
 use crate::routes::init_routes;
 use tokio::net::TcpListener;
+use axum::http::{HeaderValue, Method};
+use tower_http::cors::{Any, CorsLayer};
 
 /// Point d'entrée principal asynchrone
 /// Lance le serveur HTTP sur http://127.0.0.1:3000
@@ -36,7 +38,12 @@ async fn main() {
     println!("✓ Connexion à la base de données réussie !");
 
     // Étape 3: Construire l'application Axum avec toutes les routes
-    let app = init_routes(pool, jwt_secret);
+    let cors = CorsLayer::new()
+    .allow_origin(Any)
+    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+    .allow_headers(Any);
+
+    let app = init_routes(pool, jwt_secret).layer(cors);
 
     // Étape 4: Démarrer le serveur TCP qui écoute les requêtes HTTP
     let listener = TcpListener::bind("127.0.0.1:3000")
