@@ -30,6 +30,7 @@ function calcCalories(met: number, weightKg: number, durationMin: number): numbe
 const SportPage: React.FC = () => {
   const userId = useUserStore(s => s.profile?.id) ?? 0;
   const [sessions, setSessions] = useState<SportSessionEntry[]>([]);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   const [sportType, setSportType] = useState<SportType>('running');
   const [durationMin, setDurationMin] = useState(30);
@@ -53,40 +54,62 @@ const SportPage: React.FC = () => {
     () => sessions.filter(s => s.date === TODAY).sort((a, b) => b.id.localeCompare(a.id)),
     [sessions]
   );
-  const todayBurned = todaySessions.reduce((sum, s) => sum + s.caloriesBurned, 0);
+  const todayBurned = todaySessions.reduce((sum, s) => sum + s.calories, 0);
   const weekBurned = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
       return d.toISOString().slice(0, 10);
     });
-    return sessions.filter(s => days.includes(s.date)).reduce((sum, s) => sum + s.caloriesBurned, 0);
+    return sessions.filter(s => days.includes(s.date)).reduce((sum, s) => sum + s.calories, 0);
   }, [sessions]);
+
+  const resetForm = () => {
+    setEditingSessionId(null);
+    setSportType('running');
+    setDurationMin(30);
+    setWeightKg(70);
+    setNote('');
+  };
 
   const handleSave = async () => {
     if (durationMin <= 0 || weightKg <= 0) return;
 
     const entry: SportSessionEntry = {
-      id: Date.now().toString(),
+      id: editingSessionId ?? Date.now().toString(),
       date: TODAY,
+      time: new Date().toTimeString().slice(0, 8),
+      type_id: 1,
       sportType,
-      durationMin,
-      weightKg,
-      met: selectedSport.met,
-      caloriesBurned: calcCalories(selectedSport.met, weightKg, durationMin),
+      duration: durationMin,
+      calories: calcCalories(selectedSport.met, weightKg, durationMin),
+      intensity: 'modéré',
       note: note.trim() || undefined,
     };
 
     try {
-      const created = await healthService.createSportSession(userId, entry);
-      setSessions(prev => [created, ...prev]);
+      if (editingSessionId) {
+        const updated = await healthService.updateSportSession(userId, editingSessionId, entry);
+        setSessions(prev => prev.map(s => (s.id === editingSessionId ? updated : s)));
+      } else {
+        const created = await healthService.createSportSession(userId, entry);
+        setSessions(prev => [created, ...prev]);
+      }
     } catch {
       return;
     }
-    setSportType('running');
-    setDurationMin(30);
-    setWeightKg(70);
-    setNote('');
+    resetForm();
+  };
+
+  const handleEdit = (session: SportSessionEntry) => {
+    setEditingSessionId(session.id);
+    setSportType(session.sportType ?? 'running');
+    setDurationMin(session.duration);
+    setNote(session.note ?? '');
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
   };
 
   const handleDelete = async (id: string) => {
@@ -191,14 +214,26 @@ const SportPage: React.FC = () => {
               />
             </div>
 
-            <button
-              className="button health-btn-submit"
-              onClick={handleSave}
-              disabled={durationMin <= 0 || weightKg <= 0}
-              style={{ '--tc': 'var(--h-water)', '--tg': 'var(--h-water-glow)' } as React.CSSProperties}
-            >
-              Ajouter la séance
-            </button>
+            <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+              <button
+                className="button health-btn-submit"
+                onClick={handleSave}
+                disabled={durationMin <= 0 || weightKg <= 0}
+                style={{ '--tc': 'var(--h-water)', '--tg': 'var(--h-water-glow)' } as React.CSSProperties}
+              >
+                {editingSessionId ? 'Mettre à jour la séance' : 'Ajouter la séance'}
+              </button>
+              {editingSessionId && (
+                <button
+                  className="button"
+                  style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--txt-faint)' }}
+                  type="button"
+                  onClick={handleCancelEdit}
+                >
+                  Annuler
+                </button>
+              )}
+            </div>
 
             <hr style={{ margin: 0 }} />
 
@@ -214,15 +249,16 @@ const SportPage: React.FC = () => {
                       <div key={session.id} className="health-item" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div className="health-item-info">
                           <div className="health-item-title">
-                            {sport?.emoji} {sport?.label ?? session.sportType}
+                            {sport?.emoji} {sport?.label ?? session.sportType ?? 'Sport'}
                           </div>
                           <div className="health-item-meta">
-                            {session.durationMin} min • MET {session.met} • {session.weightKg} kg{session.note ? ` • ${session.note}` : ''}
+                            {session.duration} min{session.intensity ? ` • ${session.intensity}` : ''}{session.note ? ` • ${session.note}` : ''}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                          <span style={{ fontWeight: 700, color: 'var(--h-water)', whiteSpace: 'nowrap' }}>{session.caloriesBurned} kcal</span>
-                          <button className="button alco-remove-btn" onClick={() => handleDelete(session.id)}>−</button>
+                          <span style={{ fontWeight: 700, color: 'var(--h-water)', whiteSpace: 'nowrap' }}>{session.calories} kcal</span>
+                          <button className="button" style={{ background: 'transparent', border: '1px solid rgba(220,53,69,0.12)', color: 'var(--danger)' }} onClick={() => handleDelete(session.id)}>suppr</button>
+                          <button className="button" style={{ background: 'transparent', border: '1px solid rgba(33,150,243,0.16)', color: 'var(--link)' }} onClick={() => handleEdit(session)}>modifier</button>
                         </div>
                       </div>
                     );

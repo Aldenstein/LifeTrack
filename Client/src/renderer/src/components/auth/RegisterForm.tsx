@@ -6,32 +6,25 @@ export default function RegisterForm() {
   const navigate = useNavigate()
   const { register, loading, error } = useAuth()
 
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  // Correction : "password" -> "passphrase" (terme exact de l'API LifeTrack)
+  const [passphrase, setPassphrase] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [localError, setLocalError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLocalError('')
-    if (!name || !email || !password) { setLocalError('Remplis tous les champs.'); return }
-    if (password.length < 6) { setLocalError('Mot de passe trop court (min. 6 caractères).'); return }
-    const ok = await register({ username: name, email, password })
+    // Correction : suppression du champ "name/username" — absent de l'API
+    if (!email || !passphrase) { setLocalError('Remplis tous les champs.'); return }
+    if (passphrase.length < 8) { setLocalError('Passphrase trop courte (min. 8 caracteres).'); return }
+    // Correction : { username, email, password } -> { email, passphrase }
+    const ok = await register({ email, passphrase })
     if (ok) navigate('/')
   }
 
   return (
     <form onSubmit={handleSubmit}>
-
-      {/* Prénom */}
-      <div className="field">
-        <label className="label">Prénom</label>
-        <div className="control">
-          <input className="input" type="text" placeholder="Votre prénom"
-            value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
-      </div>
 
       {/* Email */}
       <div className="field">
@@ -42,14 +35,20 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      {/* Mot de passe */}
+      {/* Passphrase */}
       <div className="field">
-        <label className="label">Mot de passe</label>
+        {/* Correction : label "Mot de passe" -> "Passphrase" */}
+        <label className="label">Passphrase</label>
+        {/* Avertissement : la passphrase chiffre les donnees Zero-Knowledge */}
+        <p className="help mb-2 has-text-warning-dark">
+          ⚠️ Ta passphrase chiffre tes donnees. Si tu la perds, tes donnees ne pourront
+          plus jamais etre recuperees.
+        </p>
         <div className="field has-addons mb-0">
           <div className="control is-expanded">
             <input className="input psw" type={showPwd ? 'text' : 'password'}
-              placeholder="••••••••" value={password}
-              onChange={(e) => setPassword(e.target.value)} />
+              placeholder="••••••••" value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)} />
           </div>
           <div className="control">
             <button type="button" className="button auth-eye-btn"
@@ -65,7 +64,7 @@ export default function RegisterForm() {
 
       {/* Submit */}
       <button className="button is-fullwidth auth-submit mt-2" type="submit" disabled={loading}>
-        {loading ? 'Création…' : 'Créer mon compte'}
+        {loading ? 'Creation...' : 'Creer mon compte'}
       </button>
 
     </form>

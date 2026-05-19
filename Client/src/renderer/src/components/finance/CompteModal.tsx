@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useFinanceStore } from '@/store/useFinanceStore'
-import { financeService } from '@/services/financeService'
-import { useUserStore } from '@/store/userStore'
+import { financeService }  from '@/services/financeService'
+import { useUserStore }    from '@/store/userStore'
 
 interface Props { onClose: () => void }
 
 export default function CompteModal({ onClose }: Props) {
-  const userId              = useUserStore(s => s.profile?.id)
-  const { addAccount }      = useFinanceStore()
+  const userId         = useUserStore(s => s.profile?.id)
+  const { addAccount } = useFinanceStore()
 
   const [name,    setName]    = useState('')
   const [balance, setBalance] = useState('')
@@ -20,11 +20,11 @@ export default function CompteModal({ onClose }: Props) {
     if (!valide || !userId) return
     try {
       setLoading(true)
-      const { id } = await financeService.createAccount(userId, {
+      const created = await financeService.createAccount(userId, {
         name:    name.trim(),
         balance: parseFloat(balance) || 0,
       })
-      addAccount({ id, name: name.trim(), balance: parseFloat(balance) || 0 })
+      addAccount(created)
       onClose()
     } catch (err: any) {
       setError(err.message)
@@ -64,7 +64,7 @@ export default function CompteModal({ onClose }: Props) {
             <button className="button finance-btn-cancel" onClick={onClose}>Annuler</button>
             <button className="button finance-btn-submit" onClick={handleSave}
               disabled={!valide || loading}>
-              {loading ? 'Création...' : 'Créer'}
+              {loading ? 'Creation...' : 'Creer'}
             </button>
           </div>
         </footer>

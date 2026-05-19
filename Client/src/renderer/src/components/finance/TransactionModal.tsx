@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useFinanceStore } from '@/store/useFinanceStore'
-import { financeService } from '@/services/financeService'
-import { useUserStore } from '@/store/userStore'
+import { financeService }  from '@/services/financeService'
+import { useUserStore }    from '@/store/userStore'
 import type { ApiFinanceType, ApiAccount } from '@/types/api'
 
 interface Props {
@@ -35,13 +35,14 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
       :  Math.abs(parseFloat(montant))
     try {
       setLoading(true)
-      const { id } = await financeService.createTransaction(userId, {
+      const created = await financeService.createTransaction(userId, {
         account_id:  comId,
         type_id:     typeId,
         amount,
         description: description.trim(),
+        date,
       })
-      addTransaction({ id, account_id: comId, type_id: typeId, amount, description: description.trim(), date })
+      addTransaction(created)
       onClose()
     } catch (err: any) {
       setError(err.message)
@@ -60,19 +61,17 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
         </header>
         <section className="modal-card-body finance-modal__body">
           {error && <p className="help is-danger">{error}</p>}
-
           <div className="field">
             <div className="buttons has-addons fin-toggle">
               {(['depense', 'entree'] as Direction[]).map(d => (
                 <button key={d}
                   className={`button fin-toggle__btn ${direction === d ? 'is-active' : ''}`}
                   onClick={() => setDirection(d)}>
-                  {d === 'depense' ? '− Dépense' : '+ Entrée'}
+                  {d === 'depense' ? '- Depense' : '+ Entree'}
                 </button>
               ))}
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Montant</label>
             <div className="control has-icons-left">
@@ -81,7 +80,6 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
               <span className="icon is-left finance-input__icon">€</span>
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Description <span className="fin-required">*</span></label>
             <div className="control">
@@ -89,7 +87,6 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
                 value={description} onChange={e => setDescription(e.target.value)} />
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Date</label>
             <div className="control">
@@ -97,7 +94,6 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
                 value={date} onChange={e => setDate(e.target.value)} />
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Type</label>
             <div className="control">
@@ -108,7 +104,6 @@ export default function TransactionModal({ accountId, accounts, financeTypes, on
               </div>
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Compte</label>
             <div className="control">

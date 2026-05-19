@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import BackButton from '@/components/BackButton'
-import { useFinanceStore }       from '@/store/useFinanceStore'
-import TransactionCard           from './TransactionCard'
-import TransactionModal          from './TransactionModal'
-import PlannedExpenseCard        from './PlannedExpenseCard'
-import PlannedExpenseModal       from './PlannedExpenseModal'
+import BackButton            from '@/components/BackButton'
+import { useFinanceStore }   from '@/store/useFinanceStore'
+import TransactionCard       from './TransactionCard'
+import TransactionModal      from './TransactionModal'
+import PlannedExpenseCard    from './PlannedExpenseCard'
+import PlannedExpenseModal   from './PlannedExpenseModal'
 
 interface Props {
   accountId: number
@@ -16,11 +16,11 @@ type Tab = 'transactions' | 'planned'
 export default function CompteDetail({ accountId, onBack }: Props) {
   const { accounts, transactions, plannedExpenses, financeTypes } = useFinanceStore()
 
-  const account  = accounts.find(a => a.id === accountId)
-  const txs      = transactions
+  const account = accounts.find(a => a.id === accountId)
+  const txs     = transactions
     .filter(t => t.account_id === accountId)
     .sort((a, b) => b.date.localeCompare(a.date))
-  const planned  = plannedExpenses.filter(e => e.account_id === accountId)
+  const planned = plannedExpenses.filter(e => e.account_id === accountId)
 
   const [tab,          setTab]          = useState<Tab>('transactions')
   const [showTxModal,  setShowTxModal]  = useState(false)
@@ -45,7 +45,7 @@ export default function CompteDetail({ accountId, onBack }: Props) {
                     <div>
                       <p className="finance-title">{account.name}</p>
                       <p className="finance-subtitle">
-                        {tab === 'transactions' ? 'Mouvements' : 'Dépenses planifiées'}
+                        {tab === 'transactions' ? 'Mouvements' : 'Depenses planifiees'}
                       </p>
                     </div>
                   </div>
@@ -62,7 +62,6 @@ export default function CompteDetail({ accountId, onBack }: Props) {
             </div>
 
             <div className="box finance-box finance-box--wide">
-
               <div className="columns is-mobile is-gapless compte-stats">
                 <div className="column has-text-centered">
                   <p className="heading finance-solde-total__label">Solde</p>
@@ -71,7 +70,7 @@ export default function CompteDetail({ accountId, onBack }: Props) {
                   </p>
                 </div>
                 <div className="column has-text-centered">
-                  <p className="heading finance-solde-total__label">Entrées</p>
+                  <p className="heading finance-solde-total__label">Entrees</p>
                   <p className="title compte-stats__value positif">{fmt(entrees)}</p>
                 </div>
                 <div className="column has-text-centered">
@@ -90,7 +89,7 @@ export default function CompteDetail({ accountId, onBack }: Props) {
                   </li>
                   <li className={tab === 'planned' ? 'is-active' : ''}>
                     <a onClick={() => setTab('planned')}>
-                      Planifiées
+                      Planifiees
                       {planned.length > 0 && <span className="tag fin-tab__badge">{planned.length}</span>}
                     </a>
                   </li>
@@ -99,7 +98,7 @@ export default function CompteDetail({ accountId, onBack }: Props) {
 
               {tab === 'transactions' && (
                 txs.length === 0
-                  ? <div className="notification finance-empty">Aucun mouvement  clique sur + 💸</div>
+                  ? <div className="notification finance-empty">Aucun mouvement — clique sur + 💸</div>
                   : <div className="fin-list">
                       {txs.map(t => (
                         <TransactionCard key={t.id} transaction={t} financeTypes={financeTypes} />
@@ -109,14 +108,13 @@ export default function CompteDetail({ accountId, onBack }: Props) {
 
               {tab === 'planned' && (
                 planned.length === 0
-                  ? <div className="notification finance-empty">Aucune dépense planifiée  clique sur + 🔁</div>
+                  ? <div className="notification finance-empty">Aucune depense planifiee — clique sur + 🔁</div>
                   : <div className="fin-list">
                       {planned.map(e => (
                         <PlannedExpenseCard key={e.id} expense={e} financeTypes={financeTypes} />
                       ))}
                     </div>
               )}
-
             </div>
           </div>
         </div>

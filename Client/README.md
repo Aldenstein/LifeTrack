@@ -9,14 +9,23 @@ Application Electron + React + TypeScript pour le suivi de la vie quotidienne: f
 ```bash
 npm install
 ```
+ 
 
 ### Configuration API
 
 Le front attend une API accessible via `VITE_API_URL`.
 
 ```bash
-VITE_API_URL=http://localhost:8080
+VITE_API_URL=https://lifetrack.chocsathan.fr
 ```
+
+Si tu utilises Windows PowerShell :
+
+```powershell
+$env:VITE_API_URL='https://lifetrack.chocsathan.fr'
+```
+
+> Note : ouvrir directement `https://lifetrack.chocsathan.fr` dans le navigateur peut renvoyer "non autorisé" si le backend n’expose pas de route publique à la racine. C’est normal : le front communique avec des endpoints comme `/auth/login` et `/users/me`.
 
 ### Lancer le projet
 
@@ -179,4 +188,43 @@ npm run typecheck
 
 ## Intégration API
 
-Le front n’utilise plus de données de démonstration au démarrage. Pour connecter le backend, il suffit de fournir les endpoints attendus par `authService` et `financeService`, puis de renseigner `VITE_API_URL`.
+Le front n’utilise plus de données de démonstration au démarrage. Il suffit de fournir l'URL de l'API via la variable d'environnement `VITE_API_URL` et d'exposer les endpoints suivants attendus par l'application.
+
+- Configuration (exemple):
+
+```bash
+VITE_API_URL=http://localhost:8080
+# ou dans Windows PowerShell
+$env:VITE_API_URL='http://api.example.com'
+```
+
+- Auth (public):
+	- `POST /auth/login`  — body: `{ "email": string, "password": string }` → response: `{ "token": string }`
+	- `POST /auth/register` — body: `{ "email": string, "password": string, ... }` → response: `{ "token": string }`
+	- `GET /users/me` — header: `Authorization: Bearer <token>` → response: profil utilisateur `{ "id": number, "email": string, "name": string, ... }`
+
+- Finance (auth required, uses `Authorization: Bearer <token>`):
+	- `GET /users/:userId/accounts` → liste des comptes
+	- `POST /users/:userId/accounts` — créer compte, body: `{...}` → `{ "id": number }`
+	- `GET /finance/types` → types de finance
+	- `GET /users/:userId/transactions` → liste des transactions
+	- `POST /users/:userId/transactions` — créer transaction, body: `{...}` → `{ "id": number }`
+		- Note: le body peut contenir `date` (format ISO `YYYY-MM-DD`) pour fixer la date de la transaction. Si absent, la date est définie côté client lors de l'ajout.
+
+	Notes supplémentaires:
+	- Tâches (`/users/:userId/todos`): l'application envoie et reçoit le format suivant côté API — priorité est mappée en nombre (high=3, medium=2, low=1) et la date d'échéance est `due_date` (ISO `YYYY-MM-DD`).
+	- Habitudes (`/users/:userId/habits`): l'application mappe les champs `title` / `frequency` du backend vers les champs UI (`name`, `frequency`).
+	- `GET /users/:userId/planned-expenses` → dépenses planifiées
+	- `POST /users/:userId/planned-expenses` — créer dépense planifiée, body: `{...}` → `{ "id": number }`
+
+Remarques:
+- L'application utilise un client HTTP commun (`src/renderer/src/services/api.ts`) qui lit `VITE_API_URL` à l'exécution. Assurez-vous que l'URL fournie ne se termine pas par un slash ou adaptez les endpoints en conséquence.
+- Le token retourné par `/auth/login` ou `/auth/register` est stocké via `useUserStore` (persistant). Après authentification, l'application récupère automatiquement le profil via `/users/me`.
+
+Après avoir configuré `VITE_API_URL`, relancez le mode développement:
+
+```bash
+npm run dev
+```
+
+Avec ces éléments en place, il ne reste plus qu'à fournir l'URL de votre API pour connecter l'application.

@@ -6,20 +6,18 @@ export default function AuthCard() {
   const [tab, setTab] = useState<'login' | 'register'>('login')
 
   return (
-    /* hero + hero-body = pleine hauteur centrée  remplace auth-page + auth-card */
     <section className="hero is-fullheight auth-bg">
       <div className="hero-body">
         <div className="container">
 
-          {/* box = card Bulma légère  remplace auth-card */}
           <div className="box auth-box">
 
-            {/* Logo  pas d'équivalent Bulma, 3 lignes custom suffisent */}
+            {/* Logo */}
             <div className="has-text-centered mb-4">
               <span className="auth-logo__img">🌿</span>
             </div>
 
-            {/* Tabs Bulma is-toggle is-fullwidth  remplace auth-tabs pill */}
+            {/* Tabs */}
             <div className="tabs is-toggle is-fullwidth mb-4" role="tablist">
               <ul>
                 <li className={tab === 'login' ? 'is-active' : ''}>
@@ -37,17 +35,17 @@ export default function AuthCard() {
               </ul>
             </div>
 
-            {/* Heading  .title + .subtitle Bulma natifs */}
+            {/* Heading */}
             <div className="mb-4">
               {tab === 'login' ? (
                 <>
-                  <h1 className="title is-5">{String.fromCodePoint(0x1F44B)} Bon retour</h1>
+                  <h1 className="title is-5">👋 Bon retour</h1>
                   <p className="subtitle is-6">Connectez-vous pour continuer.</p>
                 </>
               ) : (
                 <>
-                  <h1 className="title is-5">{String.fromCodePoint(0x2728)} Créer un compte</h1>
-                  <p className="subtitle is-6">Commence à suivre ta vie dès aujourd'hui.</p>
+                  <h1 className="title is-5">✨ Creer un compte</h1>
+                  <p className="subtitle is-6">Commence a suivre ta vie des aujourd'hui.</p>
                 </>
               )}
             </div>
@@ -55,17 +53,17 @@ export default function AuthCard() {
             {/* Formulaire */}
             {tab === 'login' ? <LoginForm /> : <RegisterForm />}
 
-            {/* Divider  une seule ligne custom */}
+            {/* Divider */}
             <div className="auth-divider my-4">ou</div>
 
-            {/* Switch  .has-text-centered + helpers Bulma */}
+            {/* Switch */}
             <p className="has-text-centered is-size-7 auth-switch-text">
               {tab === 'login' ? (
                 <>Pas encore de compte ?{' '}
                   <a onClick={() => setTab('register')}>S'inscrire</a>
                 </>
               ) : (
-                <>Déjà un compte ?{' '}
+                <>Deja un compte ?{' '}
                   <a onClick={() => setTab('login')}>Se connecter</a>
                 </>
               )}

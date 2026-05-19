@@ -79,6 +79,13 @@
   max-width: 100% !important;
 }
 
+/* Variante plus fluide pour la page HealthHome */
+.box.health-home-box {
+  max-height: none !important;
+  overflow-y: visible !important;
+  padding: var(--h-space-md) !important;
+}
+
 /* Header de page  titre + sous-titre + back */
 .health-title {
   font-size: 1.25rem;
@@ -135,10 +142,33 @@
 }
 
 @media screen and (max-width: 640px) {
-  .dash-grid { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr; gap: var(--h-space-sm); }
   .health-tile { width: 100%; padding: var(--h-space-md); border-radius: .9rem }
-  .box.health-box { padding: var(--h-space-md) !important; max-height: calc(100vh - 72px); }
-  .hero.health-bg .hero-body { padding-top: var(--h-space-md) !important; padding-bottom: var(--h-space-md) !important; }
+  .box.health-box { padding: var(--h-space-md) !important; max-height: none; }
+  .box.health-home-box { padding: var(--h-space-sm) !important; }
+  .hero.health-bg .hero-body { padding-top: var(--h-space-md) !important; padding-bottom: var(--h-space-md) !important; align-items: stretch !important; }
+  .health-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--h-space-sm);
+  }
+  .health-item:hover { background: var(--surface-up); }
+  .health-item > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: flex-start;
+  }
+  .mood-picker, .health-select, .columns.is-mobile {
+    flex-wrap: wrap;
+  }
+  .button.mood-btn, .button.hydra-add-btn, .button.alco-add-btn {
+    width: 100% !important;
+    max-width: 140px !important;
+  }
+  .pond-result {
+    padding: 1rem .75rem;
+  }
 }
 .button.health-back-btn:hover {
   border-color: rgba(157,147,224,.35) !important;

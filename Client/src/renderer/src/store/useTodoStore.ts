@@ -4,8 +4,6 @@ import type { Todo } from '@/types'
 import { todoService } from '@/services/todoService'
 import { useUserStore } from './userStore'
 
-// Normaliser les tâches anciennes ou mal formées pour assurer la cohérence des données
-// Convertit les anciens objets timer en valeurs simples (minutes nullable)
 function normalizeTodo(todo: Todo): Todo {
   const legacyTimer = todo.timer as
     | number
@@ -44,7 +42,7 @@ const initialState = { todos: [] }
 
 export const useTodoStore = create<TodoState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
 
       setTodos: (todos) => set({ todos }),
@@ -52,31 +50,38 @@ export const useTodoStore = create<TodoState>()(
       addTodo: async (todo) => {
         const userId = useUserStore.getState().profile?.id
         if (!userId) return
-        const created = await todoService.createTodo(userId, normalizeTodo(todo))
-        set((state) => ({ todos: [...state.todos, normalizeTodo(created)] }))
+        try {
+          const created = await todoService.createTodo(userId, normalizeTodo(todo))
+          set((state) => ({ todos: [...state.todos, normalizeTodo(created)] }))
+        } catch {
+          // Si l'API échoue, on insère quand même localement
+          set((state) => ({ todos: [...state.todos, normalizeTodo(todo)] }))
+        }
       },
 
+      // Pas de route PUT dans l'API — mise à jour locale uniquement
       updateTodo: async (id, updates) => {
-        const userId = useUserStore.getState().profile?.id
-        if (!userId) return
-        const updated = await todoService.updateTodo(userId, id, updates)
-        set((state) => ({ todos: state.todos.map((t) => (t.id === id ? normalizeTodo(updated) : normalizeTodo(t))) }))
+        set((state) => ({
+          todos: state.todos.map((t) =>
+            t.id === id ? normalizeTodo({ ...t, ...updates }) : normalizeTodo(t)
+          ),
+        }))
       },
 
+      // Pas de route DELETE dans l'API — suppression locale uniquement
       deleteTodo: async (id) => {
-        const userId = useUserStore.getState().profile?.id
-        if (!userId) return
-        await todoService.deleteTodo(userId, id)
         set((state) => ({ todos: state.todos.filter((t) => t.id !== id) }))
       },
 
+      // Pas de route PATCH dans l'API — toggle local uniquement
       toggleComplete: async (id) => {
-        const userId = useUserStore.getState().profile?.id
-        if (!userId) return
-        const current = useTodoStore.getState().todos.find((t) => t.id === id)
+        const current = get().todos.find((t) => t.id === id)
         if (!current) return
-        const updated = await todoService.toggleComplete(userId, id, !current.completed)
-        set((state) => ({ todos: state.todos.map((t) => (t.id === id ? normalizeTodo(updated) : normalizeTodo(t))) }))
+        set((state) => ({
+          todos: state.todos.map((t) =>
+            t.id === id ? normalizeTodo({ ...t, completed: !t.completed }) : normalizeTodo(t)
+          ),
+        }))
       },
 
       reset: () => set(initialState),
@@ -86,12 +91,11 @@ export const useTodoStore = create<TodoState>()(
       version: 2,
       migrate: (persistedState: unknown) => {
         const state = persistedState as { todos?: Todo[] } | undefined
-
         return {
           ...(state ?? {}),
           todos: Array.isArray(state?.todos)
             ? state.todos.map((todo) => normalizeTodo(todo))
-          : [],
+            : [],
         }
       },
     }

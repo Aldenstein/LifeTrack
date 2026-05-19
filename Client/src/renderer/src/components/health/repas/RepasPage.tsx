@@ -27,6 +27,7 @@ function typeLabel(type: MealType): string {
 const RepasPage: React.FC = () => {
   const userId = useUserStore(s => s.profile?.id) ?? 0;
   const [meals, setMeals] = useState<MealEntry[]>([]);
+  const [editingMealId, setEditingMealId] = useState<string | null>(null);
 
   const [mealType, setMealType] = useState<MealType>('lunch');
   const [name, setName] = useState('');
@@ -58,28 +59,54 @@ const RepasPage: React.FC = () => {
     return meals.filter(m => days.includes(m.date)).reduce((sum, meal) => sum + meal.calories, 0);
   }, [meals]);
 
+  const resetForm = () => {
+    setEditingMealId(null);
+    setMealType('lunch');
+    setName('');
+    setCalories(450);
+    setNote('');
+  };
+
   const handleSave = async () => {
     if (!name.trim() || calories <= 0) return;
 
     const entry: MealEntry = {
-      id: Date.now().toString(),
+      id: editingMealId ?? Date.now().toString(),
       date: TODAY,
-      mealType,
+      time: new Date().toTimeString().slice(0, 8),
       name: name.trim(),
       calories: Math.round(calories),
+      proteins: 0,
+      carbs: 0,
+      fats: 0,
+      mealType,
       note: note.trim() || undefined,
     };
 
     try {
-      const created = await healthService.createMealEntry(userId, entry);
-      setMeals(prev => [created, ...prev]);
+      if (editingMealId) {
+        const updated = await healthService.updateMealEntry(userId, editingMealId, entry);
+        setMeals(prev => prev.map(m => (m.id === editingMealId ? updated : m)));
+      } else {
+        const created = await healthService.createMealEntry(userId, entry);
+        setMeals(prev => [created, ...prev]);
+      }
     } catch {
       return;
     }
-    setName('');
-    setCalories(450);
-    setNote('');
-    setMealType('lunch');
+    resetForm();
+  };
+
+  const handleEdit = (meal: MealEntry) => {
+    setEditingMealId(meal.id);
+    setMealType(meal.mealType ?? 'lunch');
+    setName(meal.name);
+    setCalories(meal.calories);
+    setNote(meal.note ?? '');
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
   };
 
   const handleDelete = async (id: string) => {
@@ -178,14 +205,26 @@ const RepasPage: React.FC = () => {
               />
             </div>
 
-            <button
-              className="button health-btn-submit"
-              onClick={handleSave}
-              disabled={!name.trim() || calories <= 0}
-              style={{ '--tc': 'var(--h-mood)', '--tg': 'var(--h-mood-glow)' } as React.CSSProperties}
-            >
-              Ajouter le repas
-            </button>
+            <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
+              <button
+                className="button health-btn-submit"
+                onClick={handleSave}
+                disabled={!name.trim() || calories <= 0}
+                style={{ '--tc': 'var(--h-mood)', '--tg': 'var(--h-mood-glow)' } as React.CSSProperties}
+              >
+                {editingMealId ? 'Mettre à jour le repas' : 'Ajouter le repas'}
+              </button>
+              {editingMealId && (
+                <button
+                  className="button"
+                  style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--txt-faint)' }}
+                  type="button"
+                  onClick={handleCancelEdit}
+                >
+                  Annuler
+                </button>
+              )}
+            </div>
 
             <hr style={{ margin: 0 }} />
 
@@ -207,7 +246,8 @@ const RepasPage: React.FC = () => {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                         <span style={{ fontWeight: 700, color: 'var(--h-mood)', whiteSpace: 'nowrap' }}>{meal.calories} kcal</span>
-                        <button className="button alco-remove-btn" onClick={() => handleDelete(meal.id)}>−</button>
+                        <button className="button" style={{ background: 'transparent', border: '1px solid rgba(220,53,69,0.12)', color: 'var(--danger)' }} onClick={() => handleDelete(meal.id)}>suppr</button>
+                        <button className="button" style={{ background: 'transparent', border: '1px solid rgba(33,150,243,0.16)', color: 'var(--link)' }} onClick={() => handleEdit(meal)}>modifier</button>
                       </div>
                     </div>
                   ))}

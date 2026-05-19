@@ -117,7 +117,7 @@ const HealthHome: React.FC = () => {
           <hr />
 
           {/* Box principale avec la grille de tuiles */}
-          <div className="box health-box" style={{ marginTop: '1rem' }}>
+          <div className="box health-box health-home-box" style={{ marginTop: '1rem' }}>
             <div className="dash-grid">
               {MODULES.map((mod) => (
                 <div className="health-grid-item" key={mod.key}>

@@ -5,22 +5,26 @@ interface Props {
   financeTypes: ApiFinanceType[]
 }
 
-function getJoursRestants(nextDate: string): number {
-  const today = new Date(); today.setHours(0,0,0,0)
+// Correction : helpers getJoursRestants et labelPeriode retires de ce composant
+// Ils etaient dupliques depuis facture.ts avec des types differents (Facture vs ApiPlannedExpense)
+// On les recalcule directement ici depuis next_date / periodicite / intervalle de l'API
+
+function joursRestants(nextDate: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   return Math.ceil((new Date(nextDate).getTime() - today.getTime()) / 86400000)
 }
 
-function labelPeriode(e: ApiPlannedExpense): string {
+function labelPeriode(periodicite: string, intervalle: number): string {
   const map: Record<string, string> = { JOUR: 'jour', SEMAINE: 'semaine', MOIS: 'mois', ANNEE: 'an' }
-  const unite = map[e.periodicite] ?? e.periodicite.toLowerCase()
-  return e.intervalle === 1 ? `Tous les ${unite}s` : `Tous les ${e.intervalle} ${unite}s`
+  const unite = map[periodicite] ?? periodicite.toLowerCase()
+  return intervalle === 1 ? `Tous les ${unite}s` : `Tous les ${intervalle} ${unite}s`
 }
 
 export default function PlannedExpenseCard({ expense, financeTypes }: Props) {
-  const type       = financeTypes.find(t => t.id === expense.type_id)
-  const joursRest  = getJoursRestants(expense.next_date)
-  const urgent     = joursRest <= 3
-  const prochaine  = new Date(expense.next_date).toLocaleDateString('fr-FR', {
+  const type      = financeTypes.find(t => t.id === expense.type_id)
+  const joursRest = joursRestants(expense.next_date)
+  const urgent    = joursRest <= 3
+  const prochaine = new Date(expense.next_date).toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'short',
   })
 
@@ -29,7 +33,8 @@ export default function PlannedExpenseCard({ expense, financeTypes }: Props) {
       <div className="fac-item__info">
         <span className="fac-item__type">{expense.description}</span>
         <span className="fac-item__periode">
-          {type?.name && <>{type.name} · </>}{labelPeriode(expense)}
+          {type?.name && <>{type.name} · </>}
+          {labelPeriode(expense.periodicite, expense.intervalle)}
         </span>
       </div>
       <div className="fac-item__date">

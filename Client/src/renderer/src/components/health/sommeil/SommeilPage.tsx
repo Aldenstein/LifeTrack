@@ -73,10 +73,15 @@ const SommeilPage: React.FC = () => {
 
   // Sauvegarde ou mise à jour de l'entrée du jour
   const handleSave = () => {
+    const durationHours = calcDuration(bedTime, wakeTime);
     const newEntry: SleepEntry = {
       id: todayEntry?.id ?? Date.now().toString(),
       date: today,
-      bedTime, wakeTime, quality, note,
+      time: bedTime.length === 5 ? bedTime + ':00' : bedTime,
+      duration: Math.round(durationHours * 60),
+      quality,
+      is_restful: quality >= 4,
+      note,
     };
     setEntries(prev =>
       todayEntry
@@ -90,14 +95,14 @@ const SommeilPage: React.FC = () => {
   const days = last7Days();
   const maxDur = Math.max(...days.map(d => {
     const e = entries.find(x => x.date === d);
-    return e ? calcDuration(e.bedTime, e.wakeTime) : 0;
+    return e ? e.duration / 60 : 0;
   }), 8);
 
   const filled = days.filter(d => entries.find(x => x.date === d));
   const avgDur = filled.length
     ? filled.reduce((s, d) => {
         const e = entries.find(x => x.date === d)!;
-        return s + calcDuration(e.bedTime, e.wakeTime);
+        return s + e.duration / 60;
       }, 0) / filled.length
     : 0;
 
@@ -128,7 +133,7 @@ const SommeilPage: React.FC = () => {
               <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-end', height: '52px' }}>
                 {days.map(d => {
                   const e = entries.find(x => x.date === d);
-                  const dur = e ? calcDuration(e.bedTime, e.wakeTime) : 0;
+                  const dur = e ? e.duration / 60 : 0;
                   const pct = maxDur > 0 ? (dur / maxDur) * 100 : 0;
                   const qClass = e ? `q${e.quality}` : '';
                   return (
@@ -226,10 +231,22 @@ const SommeilPage: React.FC = () => {
                 </div>
               </div>
 
-              <button className="button health-btn-submit is-fullwidth" onClick={handleSave}
-                style={{ '--tc': 'var(--h-sleep)', '--tg': 'var(--h-sleep-glow)' } as React.CSSProperties}>
-                {todayEntry ? 'Mettre à jour' : 'Enregistrer'}
-              </button>
+              <div style={{ display: 'flex', gap: '.5rem' }}>
+                <button className="button health-btn-submit is-fullwidth" onClick={handleSave}
+                  style={{ '--tc': 'var(--h-sleep)', '--tg': 'var(--h-sleep-glow)' } as React.CSSProperties}>
+                  {todayEntry ? 'Mettre à jour' : 'Enregistrer'}
+                </button>
+
+                {todayEntry && (
+                  <button className="button" style={{ background: 'transparent', border: '1px solid rgba(220,53,69,0.12)', color: 'var(--danger)', borderRadius: '8px', fontSize: '.9rem' }}
+                    onClick={async () => {
+                      if (!confirm("Supprimer l'entrée de sommeil d'aujourd'hui ?")) return;
+                      setEntries(prev => prev.filter(e => e.date !== today));
+                      try { await healthService.deleteSleepEntry(userId, today); } catch {}
+                    }}
+                  >Supprimer</button>
+                )}
+              </div>
             </div>
 
           </div>

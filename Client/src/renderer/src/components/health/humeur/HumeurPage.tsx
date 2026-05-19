@@ -58,7 +58,10 @@ const HumeurPage: React.FC = () => {
   const handleSave = () => {
     const entry: MoodEntry = {
       id: todayEntry?.id ?? Date.now().toString(),
-      date: TODAY, level: selectedLevel, note,
+      date: TODAY,
+      mood_type_id: selectedLevel,
+      level: selectedLevel,
+      note,
     };
     setEntries(prev =>
       todayEntry
@@ -111,10 +114,20 @@ const HumeurPage: React.FC = () => {
                       "{todayEntry.note}"
                     </p>
                   )}
-                  <button
-                    style={{ marginTop: '.5rem', fontSize: '.75rem', color: 'var(--txt-faint)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-                    onClick={openModal}
-                  >Modifier</button>
+                  <div style={{ display: 'flex', gap: '.5rem', justifyContent: 'center', marginTop: '.5rem' }}>
+                    <button
+                      style={{ fontSize: '.75rem', color: 'var(--txt-faint)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={openModal}
+                    >Modifier</button>
+                    <button
+                      style={{ fontSize: '.75rem', color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={async () => {
+                        if (!confirm("Supprimer l'humeur d'aujourd'hui ?")) return;
+                        setEntries(prev => prev.filter(e => e.date !== TODAY));
+                        try { await healthService.deleteMoodEntry(userId, TODAY); } catch {}
+                      }}
+                    >Supprimer</button>
+                  </div>
                 </>
               ) : (
                 <div className="notification health-empty">

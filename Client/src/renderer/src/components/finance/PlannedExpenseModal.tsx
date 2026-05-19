@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useFinanceStore } from '@/store/useFinanceStore'
-import { financeService } from '@/services/financeService'
-import { useUserStore } from '@/store/userStore'
+import { financeService }  from '@/services/financeService'
+import { useUserStore }    from '@/store/userStore'
 import type { ApiFinanceType, ApiAccount } from '@/types/api'
 
 interface Props {
@@ -38,7 +38,7 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
     if (!valide || !userId) return
     try {
       setLoading(true)
-      const { id } = await financeService.createPlannedExpense(userId, {
+      const created = await financeService.createPlannedExpense(userId, {
         description: description.trim(),
         amount:      Math.abs(parseFloat(montant)),
         account_id:  comId,
@@ -47,12 +47,7 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
         intervalle:  parseInt(intervalle),
         next_date:   date,
       })
-      addPlannedExpense({
-        id, description: description.trim(),
-        amount: Math.abs(parseFloat(montant)),
-        account_id: comId, type_id: typeId,
-        periodicite, intervalle: parseInt(intervalle), next_date: date,
-      })
+      addPlannedExpense(created)
       onClose()
     } catch (err: any) {
       setError(err.message)
@@ -66,12 +61,11 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
       <div className="modal-background" onClick={onClose} />
       <div className="modal-card finance-modal__card">
         <header className="modal-card-head finance-modal__head">
-          <p className="modal-card-title finance-modal__title">Nouvelle dépense planifiée</p>
+          <p className="modal-card-title finance-modal__title">Nouvelle depense planifiee</p>
           <button className="delete" onClick={onClose} />
         </header>
         <section className="modal-card-body finance-modal__body">
           {error && <p className="help is-danger">{error}</p>}
-
           <div className="field">
             <label className="label finance-label">Description <span className="fin-required">*</span></label>
             <div className="control">
@@ -79,7 +73,6 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
                 value={description} onChange={e => setDescription(e.target.value)} autoFocus />
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Montant (€)</label>
             <div className="control has-icons-left">
@@ -88,15 +81,13 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
               <span className="icon is-left finance-input__icon">€</span>
             </div>
           </div>
-
           <div className="field">
-            <label className="label finance-label">Première date</label>
+            <label className="label finance-label">Premiere date</label>
             <div className="control">
               <input className="input finance-input" type="date"
                 value={date} onChange={e => setDate(e.target.value)} />
             </div>
           </div>
-
           <div className="columns is-mobile" style={{ gap: '.5rem' }}>
             <div className="column">
               <div className="field">
@@ -109,7 +100,7 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
             </div>
             <div className="column">
               <div className="field">
-                <label className="label finance-label">Période</label>
+                <label className="label finance-label">Periode</label>
                 <div className="control">
                   <div className="select finance-select is-fullwidth">
                     <select value={periodicite} onChange={e => setPeriodicite(e.target.value)}>
@@ -120,7 +111,6 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
               </div>
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Type</label>
             <div className="control">
@@ -131,7 +121,6 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
               </div>
             </div>
           </div>
-
           <div className="field">
             <label className="label finance-label">Compte</label>
             <div className="control">
@@ -148,7 +137,7 @@ export default function PlannedExpenseModal({ accountId, accounts, financeTypes,
             <button className="button finance-btn-cancel" onClick={onClose}>Annuler</button>
             <button className="button finance-btn-submit" onClick={handleSave}
               disabled={!valide || loading}>
-              {loading ? 'Création...' : 'Créer'}
+              {loading ? 'Creation...' : 'Creer'}
             </button>
           </div>
         </footer>

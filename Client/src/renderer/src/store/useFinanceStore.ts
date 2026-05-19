@@ -13,19 +13,23 @@ interface FinanceState {
   transactions:    ApiTransaction[]
   plannedExpenses: ApiPlannedExpense[]
 
-  // Chargement depuis l'API
-  setAccounts:        (data: ApiAccount[])        => void
-  setFinanceTypes:    (data: ApiFinanceType[])     => void
-  setTransactions:    (data: ApiTransaction[])     => void
-  setPlannedExpenses: (data: ApiPlannedExpense[])  => void
+  // Chargement bulk depuis l'API (appele au bootstrap)
+  setAccounts:        (data: ApiAccount[]) => void
+  setFinanceTypes:    (data: ApiFinanceType[]) => void
+  setTransactions:    (data: ApiTransaction[]) => void
+  setPlannedExpenses: (data: ApiPlannedExpense[]) => void
 
-  // Ajout après POST réussi
-  addAccount:        (a: ApiAccount)        => void
-  addFinanceType:    (t: ApiFinanceType)     => void
-  addTransaction:    (t: ApiTransaction)     => void
-  addPlannedExpense: (e: ApiPlannedExpense)  => void
+  // Ajout unitaire apres POST reussi
+  addAccount:        (a: ApiAccount) => void
+  addFinanceType:    (t: ApiFinanceType) => void
+  addTransaction:    (t: ApiTransaction) => void
+  addPlannedExpense: (e: ApiPlannedExpense) => void
 
-  // Reset (déconnexion)
+  // Suppression locale uniquement (pas de route DELETE dans l'API)
+  deleteAccount:        (id: number) => void
+  deleteTransaction:    (id: number) => void
+  deletePlannedExpense: (id: number) => void
+
   reset: () => void
 }
 
@@ -41,17 +45,30 @@ export const useFinanceStore = create<FinanceState>()(
     (set) => ({
       ...initialState,
 
-      // Setters bulk (GET au démarrage)
       setAccounts:        (data) => set({ accounts: data }),
       setFinanceTypes:    (data) => set({ financeTypes: data }),
       setTransactions:    (data) => set({ transactions: data }),
       setPlannedExpenses: (data) => set({ plannedExpenses: data }),
 
-      // Ajout unitaire (après POST)
-      addAccount:        (a) => set(s => ({ accounts:        [...s.accounts,        a] })),
-      addFinanceType:    (t) => set(s => ({ financeTypes:    [...s.financeTypes,    t] })),
-      addTransaction:    (t) => set(s => ({ transactions:    [...s.transactions,    t] })),
-      addPlannedExpense: (e) => set(s => ({ plannedExpenses: [...s.plannedExpenses, e] })),
+      addAccount:        (a) => set((s) => ({ accounts:        [...s.accounts,        a] })),
+      addFinanceType:    (t) => set((s) => ({ financeTypes:    [...s.financeTypes,    t] })),
+      addTransaction:    (t) => set((s) => ({ transactions:    [...s.transactions,    t] })),
+      addPlannedExpense: (e) => set((s) => ({ plannedExpenses: [...s.plannedExpenses, e] })),
+
+      // Suppression locale — cascade sur transactions et depenses planifiees liees
+      deleteAccount: (id) => set((s) => ({
+        accounts:        s.accounts.filter((a) => a.id !== id),
+        transactions:    s.transactions.filter((t) => t.account_id !== id),
+        plannedExpenses: s.plannedExpenses.filter((e) => e.account_id !== id),
+      })),
+
+      deleteTransaction: (id) => set((s) => ({
+        transactions: s.transactions.filter((t) => t.id !== id),
+      })),
+
+      deletePlannedExpense: (id) => set((s) => ({
+        plannedExpenses: s.plannedExpenses.filter((e) => e.id !== id),
+      })),
 
       reset: () => set(initialState),
     }),

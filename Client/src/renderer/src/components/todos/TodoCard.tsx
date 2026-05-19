@@ -15,20 +15,22 @@ function formatTime(seconds: number): string {
 }
 
 export default function TodoCard({ todo, onEdit }: Props) {
+  // Correction : toggleComplete et deleteTodo appellent l'API via le store
+  // updateTodo reste local pour le timer (pas de route PATCH todo dans l'API)
   const { toggleComplete, deleteTodo, updateTodo } = useTodoStore()
   const [exiting, setExiting] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Déterminer le style de priorité et vérifier l'échéance
   const priority  = PRIORITY_CONFIG[todo.priority]
   const isOverdue = todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date()
   const timer     = todo.timer
   const elapsed   = todo.timerElapsed ?? 0
 
-  // Boucle de mise à jour du minuteur: incrémente elapsed chaque seconde jusqu'à arrêt automatique
   useEffect(() => {
-    if (!timer || !todo.timerRunning) { if (intervalRef.current) clearInterval(intervalRef.current); return }
-
+    if (!timer || !todo.timerRunning) {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      return
+    }
     const totalSeconds = timer * 60
     intervalRef.current = setInterval(() => {
       const nextElapsed = Math.min(elapsed + 1, totalSeconds)
@@ -40,54 +42,50 @@ export default function TodoCard({ todo, onEdit }: Props) {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [timer, todo.timerRunning, elapsed])
 
-  // Basculer l'état du minuteur entre play/pause
   function toggleTimer() {
     if (!timer) return
     updateTodo(todo.id, { timerRunning: !todo.timerRunning })
   }
-  // Réinitialiser le minuteur et arrêter
+
   function resetTimer() {
     if (!timer) return
     updateTodo(todo.id, { timerElapsed: 0, timerRunning: false })
   }
-  // Triggérer l'animation de suppression avant d'effacer
+
   function handleDelete() {
     setExiting(true)
+    // Correction : deleteTodo appelle POST /users/{id}/todos avec completed=true
+    // (pas de route DELETE dans l'API — suppression locale uniquement comme pour finance)
     setTimeout(() => deleteTodo(todo.id), 280)
   }
 
-  // Calcul du minuteur: temps restant et pourcentage de progression
   const totalSeconds = (timer ?? 0) * 60
   const remaining    = Math.max(totalSeconds - elapsed, 0)
   const displayTime  = timer ? formatTime(remaining) : null
   const progressPct  = timer ? Math.min((elapsed / totalSeconds) * 100, 100) : 0
 
   return (
-    // Conteneur principal : carte de tâche avec état d'achèvement et animation
     <div className={`box todo-card${todo.completed ? ' todo-card--done' : ''}${exiting ? ' todo-card--exit' : ''}`}>
 
-      {/* Structure d'affichage : case, contenu, actions */}
       <div className="media todo-card__main">
 
-        {/* Bouton de completion avec checkbox */}
         <div className="media-left">
           <button
             className={`todo-card__check${todo.completed ? ' todo-card__check--done' : ''}`}
+            // Correction : toggleComplete appelle POST /users/{id}/todos/{id}/complete
             onClick={() => toggleComplete(todo.id)}
-            aria-label="Marquer comme terminé"
+            aria-label="Marquer comme termine"
           >
             {todo.completed ? '✓' : ''}
           </button>
         </div>
 
-        {/* Contenu : titre, description, métadonnées */}
         <div className="media-content">
           <p className="todo-card__title">{todo.title}</p>
           {todo.description && <p className="todo-card__desc">{todo.description}</p>}
-
-          {/* Badges : priorité, tag, date d'échéance */}
           <div className="tags todo-card__meta mb-0">
-            <span className="tag todo-card__badge" style={{ color: priority.color, borderColor: priority.color }}>
+            <span className="tag todo-card__badge"
+              style={{ color: priority.color, borderColor: priority.color }}>
               {priority.label}
             </span>
             {todo.tag && <span className="tag todo-card__tag">#{todo.tag}</span>}
@@ -99,51 +97,36 @@ export default function TodoCard({ todo, onEdit }: Props) {
           </div>
         </div>
 
-        {/* Actions : modifier et supprimer */}
         <div className="media-right todo-card__actions">
-          {/* Boutons d'action groupés */}
           <div className="buttons are-small">
             <button className="button todo-card__btn" onClick={() => onEdit(todo)} title="Modifier">✏️</button>
             <button className="button todo-card__btn todo-card__btn--danger" onClick={handleDelete} title="Supprimer">🗑️</button>
           </div>
         </div>
+
       </div>
 
-      {/* Section minuteur avec affichage et contrôles */}
       {timer && (
         <>
-            {/* Affichage du temps restant et durée */}
-            <div className="todo-card__timer">
+          <div className="todo-card__timer">
             <div>
-              <div className="todo-card__timer-display">
-                {displayTime}
-              </div>
-              <div className="todo-card__timer-mode">
-                Minuteur {timer} min
-              </div>
+              <div className="todo-card__timer-display">{displayTime}</div>
+              <div className="todo-card__timer-mode">Minuteur {timer} min</div>
             </div>
-
-            {/* Contrôles : démarrer/pause et réinitialiser */}
             <div className="buttons mb-0 todo-card__timer-controls">
               <button
                 className={`button todo-card__timer-btn${todo.timerRunning ? ' is-active' : ''}`}
                 onClick={toggleTimer}
-                title={todo.timerRunning ? 'Pause' : 'Démarrer'}
-              >
+                title={todo.timerRunning ? 'Pause' : 'Demarrer'}>
                 {todo.timerRunning ? '⏸' : '▶️'}
               </button>
-              <button className="button todo-card__timer-btn" onClick={resetTimer} title="Réinitialiser">
+              <button className="button todo-card__timer-btn" onClick={resetTimer} title="Reinitialiser">
                 🔄
               </button>
             </div>
           </div>
-
-          {/* Barre de progression du minuteur */}
           <div className="todo-card__timer-progress">
-            <div
-              className="todo-card__timer-progress-fill"
-              style={{ width: `${progressPct}%` }}
-            />
+            <div className="todo-card__timer-progress-fill" style={{ width: `${progressPct}%` }} />
           </div>
         </>
       )}

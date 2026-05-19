@@ -7,15 +7,17 @@ export default function LoginForm() {
   const { login, loading, error } = useAuth()
 
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  // Correction : "password" -> "passphrase"
+  const [passphrase, setPassphrase] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [localError, setLocalError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLocalError('')
-    if (!email || !password) { setLocalError('Remplis tous les champs.'); return }
-    const ok = await login({ email, password })
+    if (!email || !passphrase) { setLocalError('Remplis tous les champs.'); return }
+    // Correction : { email, password } -> { email, passphrase }
+    const ok = await login({ email, passphrase })
     if (ok) navigate('/')
   }
 
@@ -36,20 +38,20 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Mot de passe  has-addons colle le bouton oeil à l'input */}
+      {/* Passphrase */}
       <div className="field">
-        <label className="label">Mot de passe</label>
+        {/* Correction : label "Mot de passe" -> "Passphrase" */}
+        <label className="label">Passphrase</label>
         <div className="field has-addons mb-0">
           <div className="control is-expanded psw">
             <input
               className={`input psw${error ? ' is-danger' : ''}`}
               type={showPwd ? 'text' : 'password'}
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
             />
           </div>
-          {/* .control > .button colle naturellement à l'input avec has-addons */}
           <div className="control">
             <button type="button" className="button auth-eye-btn"
               onClick={() => setShowPwd(!showPwd)}>
@@ -62,14 +64,14 @@ export default function LoginForm() {
       {/* Erreur */}
       {(localError || error) && <p className="help is-danger mb-2">{localError || error}</p>}
 
-      {/* Mot de passe oublié  .has-text-right Bulma */}
+      {/* Passphrase oubliee */}
       <div className="has-text-right mb-4">
-        <a className="is-size-7 auth-link">Mot de passe oublié ?</a>
+        <a className="is-size-7 auth-link">Passphrase oubliee ?</a>
       </div>
 
-      {/* Submit  .button.is-fullwidth Bulma */}
+      {/* Submit */}
       <button className="button is-fullwidth auth-submit" type="submit" disabled={loading}>
-        {loading ? 'Connexion…' : 'Se connecter'}
+        {loading ? 'Connexion...' : 'Se connecter'}
       </button>
 
     </form>

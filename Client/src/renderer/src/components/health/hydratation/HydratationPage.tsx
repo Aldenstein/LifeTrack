@@ -1,9 +1,3 @@
-// ============================================================
-// HydratationPage.tsx  Suivi de l'hydratation quotidienne
-// Boutons +ml, jauge de progression, historique 7 jours
-// Données stockées en localStorage sous "health_hydra"
-// ============================================================
-
 import React, { useState, useEffect } from 'react';
 import BackButton from '../../BackButton';
 import { HydratationEntry } from '../../../types/health';
@@ -13,9 +7,11 @@ import '../../../styles/health.css';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Récupère ou initialise l'entrée du jour
 function getTodayEntry(entries: HydratationEntry[]): HydratationEntry {
-  return entries.find(e => e.date === TODAY) ?? { date: TODAY, totalMl: 0, goal: 2000 };
+  return (
+    entries.find(e => e.date === TODAY) ??
+    { date: TODAY, quantity: 0, hydration_type: 'eau', objective: 2000 }
+  );
 }
 
 function last7Days(): string[] {
@@ -31,54 +27,55 @@ const QUICK_ADD = [150, 250, 330, 500];
 const HydratationPage: React.FC = () => {
   const userId = useUserStore(s => s.profile?.id) ?? 0;
   const [entries, setEntries] = useState<HydratationEntry[]>([]);
-
   const [goal, setGoal] = useState(2000);
+
   const todayEntry = getTodayEntry(entries);
-  const pct = Math.min((todayEntry.totalMl / goal) * 100, 100);
+  const pct = Math.min((todayEntry.quantity / goal) * 100, 100);
 
   useEffect(() => {
     void (async () => {
       try {
         const data = await healthService.getHydratationEntries(userId);
         setEntries(data);
-        setGoal(getTodayEntry(data).goal);
+        const te = data.find(e => e.date === TODAY);
+        if (te) setGoal(te.objective);
       } catch {
         setEntries([]);
       }
     })();
   }, [userId]);
 
-  useEffect(() => {
-    setGoal(getTodayEntry(entries).goal);
-  }, [entries]);
-
-  // Ajoute des ml à l'entrée du jour
+  // Ajoute des ml : met à jour l'état local et logue l'incrément sur l'API
   const addMl = (ml: number) => {
+    void healthService.logHydration(userId, {
+      date: TODAY,
+      quantity: ml,
+      hydration_type: 'eau',
+      objective: goal,
+    }).catch(() => {});
+
     setEntries(prev => {
       const exists = prev.find(e => e.date === TODAY);
       if (exists) {
-        const next = prev.map(e =>
-          e.date === TODAY ? { ...e, totalMl: e.totalMl + ml } : e
+        return prev.map(e =>
+          e.date === TODAY
+            ? { ...e, quantity: e.quantity + ml }
+            : e
         );
-        const updated = next.find(e => e.date === TODAY);
-        if (updated) void healthService.upsertHydratationEntry(userId, updated);
-        return next;
       }
-      const next = [...prev, { date: TODAY, totalMl: ml, goal }];
-      const updated = next.find(e => e.date === TODAY);
-      if (updated) void healthService.upsertHydratationEntry(userId, updated);
-      return next;
+      return [...prev, { date: TODAY, quantity: ml, hydration_type: 'eau', objective: goal }];
     });
   };
 
-  // Réinitialise le jour courant
   const resetToday = () => {
-    setEntries(prev => {
-      const next = prev.map(e => e.date === TODAY ? { ...e, totalMl: 0 } : e);
-      const current = next.find(e => e.date === TODAY);
-      if (current) void healthService.upsertHydratationEntry(userId, current);
-      return next;
-    });
+    setEntries(prev => prev.map(e =>
+      e.date === TODAY ? { ...e, quantity: 0 } : e
+    ));
+  };
+
+  const deleteTodayEntry = () => {
+    if (!confirm("Supprimer l'entrée d'aujourd'hui ?")) return;
+    setEntries(prev => prev.filter(e => e.date !== TODAY));
   };
 
   const days = last7Days();
@@ -103,9 +100,9 @@ const HydratationPage: React.FC = () => {
             {/* Jauge principale */}
             <div className="hydra-gauge-wrap">
               <span className="hydra-gauge-val">
-                {todayEntry.totalMl >= 1000
-                  ? `${(todayEntry.totalMl / 1000).toFixed(1)}L`
-                  : `${todayEntry.totalMl}ml`}
+                {todayEntry.quantity >= 1000
+                  ? `${(todayEntry.quantity / 1000).toFixed(1)}L`
+                  : `${todayEntry.quantity}ml`}
               </span>
               <div className="hydra-track" style={{ width: '100%' }}>
                 <div className="hydra-fill" style={{ width: `${pct}%` }} />
@@ -148,8 +145,8 @@ const HydratationPage: React.FC = () => {
               <div style={{ display: 'flex', gap: '4px', alignItems: 'flex-end', height: '48px' }}>
                 {days.map(d => {
                   const e = entries.find(x => x.date === d);
-                  const g = e?.goal ?? goal;
-                  const pctD = e ? Math.min((e.totalMl / g) * 100, 100) : 0;
+                  const g = e?.objective ?? goal;
+                  const pctD = e ? Math.min((e.quantity / g) * 100, 100) : 0;
                   return (
                     <div key={d} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, height: '100%', justifyContent: 'flex-end' }}>
                       <div style={{
@@ -165,14 +162,25 @@ const HydratationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Reset du jour */}
-            <button
-              className="button is-small"
-              style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--txt-faint)', borderRadius: '8px', fontSize: '.75rem' }}
-              onClick={resetToday}
-            >
-              Réinitialiser aujourd'hui
-            </button>
+            {/* Contrôles */}
+            <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+              <button
+                className="button is-small"
+                style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--txt-faint)', borderRadius: '8px', fontSize: '.75rem' }}
+                onClick={resetToday}
+              >
+                Réinitialiser aujourd'hui
+              </button>
+              {todayEntry.quantity > 0 && (
+                <button
+                  className="button is-small"
+                  style={{ background: 'transparent', border: '1px solid rgba(220,53,69,0.12)', color: 'var(--danger)', borderRadius: '8px', fontSize: '.75rem' }}
+                  onClick={deleteTodayEntry}
+                >
+                  Supprimer l'entrée
+                </button>
+              )}
+            </div>
 
           </div>
         </div>
