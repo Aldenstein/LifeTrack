@@ -30,7 +30,13 @@ use tower_http::cors::{Any, CorsLayer};
 #[tokio::main]
 async fn main() {
     // Étape 1: Charger les variables de configuration (.env)
-    let cfg = load_config();
+    let cfg = match load_config() {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("❌ Erreur de configuration: {}", e);
+            std::process::exit(1);
+        }
+    };
     let jwt_secret = cfg.jwt_secret.clone();
 
     // Étape 2: Établir la connexion à la base de données et créer le pool de connexions

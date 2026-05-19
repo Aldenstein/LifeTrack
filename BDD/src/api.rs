@@ -2,17 +2,17 @@
 //
 // Description (FR):
 // Contient les handlers qui reçoivent les requêtes HTTP, valident
-///désérialisent les payloads JSON, convertissent les paramètres (dates,
+// et désérialisent les payloads JSON, convertissent les paramètres (dates,
 // ids) et invoquent la couche `db` pour effectuer les opérations.
-// Les handlers standardisent les réponses d'erreur via des helpers
-// (ex: `today_dashboard_error`) et renvoient des `StatusCode`/JSON.
+// Utilise le type d'erreur centralisé `AppError` pour un traitement cohérent
+// et une propagation d'erreurs simplifiée via l'opérateur `?`.
 //
 // Conventions:
 // - Les endpoints `create_*` retournent `StatusCode::CREATED` et
 //   un `CreatedResponse` contenant l'ID créé.
-// - Les endpoints `log_*` et `mark_*` retournent `NO_CONTENT` ou `CREATED`
-//   suivant l'opération.
+// - Les endpoints `log_*` et `mark_*` retournent `StatusCode::NO_CONTENT` ou `StatusCode::CREATED`.
 // - La validation des dates est centralisée via `utils::parse_date`.
+// - Toutes les erreurs retournent `Result<T>` = `std::result::Result<T, AppError>`.
 
 use axum::{
     extract::{Path, Query, State},
@@ -53,87 +53,36 @@ use crate::db::{
     get_all_encrypted_entries,
     DbPool,
 };
+use crate::errors::{AppError, Result};
 use crate::models::*;
 use crate::utils::parse_date;
-
-// Helpers pour les erreurs - simplifient les réponses d'erreur
-
-/// Erreur lors du chargement du profil utilisateur
-fn user_profile_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::NOT_FOUND,
-        Json(ApiError {
-            message: format!("Unable to load user profile: {error}"),
-        }),
-    )
-}
-
-fn today_dashboard_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiError {
-            message: format!("Unable to load today dashboard: {error}"),
-        }),
-    )
-}
-
-fn latest_module_values_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiError {
-            message: format!("Unable to load latest module values: {error}"),
-        }),
-    )
-}
-
-fn alerts_reminders_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiError {
-            message: format!("Unable to load alerts and reminders: {error}"),
-        }),
-    )
-}
-
-fn bad_request(message: impl Into<String>) -> (StatusCode, Json<ApiError>) {
-    (StatusCode::BAD_REQUEST, Json(ApiError { message: message.into() }))
-}
-
-fn encrypted_error(error: sqlx::Error) -> (StatusCode, Json<ApiError>) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiError {
-            message: format!("Encrypted storage error: {error}"),
-        }),
-    )
-}
 
 pub async fn user_profile(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<UserProfile>, (StatusCode, Json<ApiError>)> {
-    get_user_profile(&pool, user_id).await.map(Json).map_err(user_profile_error)
+) -> Result<Json<UserProfile>> {
+    get_user_profile(&pool, user_id).await.map(Json)
 }
 
 pub async fn today_dashboard(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<TodayDashboard>, (StatusCode, Json<ApiError>)> {
-    get_today_dashboard(&pool, user_id).await.map(Json).map_err(today_dashboard_error)
+) -> Result<Json<TodayDashboard>> {
+    get_today_dashboard(&pool, user_id).await.map(Json)
 }
 
 pub async fn latest_module_values(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<Vec<LatestModuleValues>>, (StatusCode, Json<ApiError>)> {
-    get_latest_module_values(&pool, user_id).await.map(Json).map_err(latest_module_values_error)
+) -> Result<Json<Vec<LatestModuleValues>>> {
+    get_latest_module_values(&pool, user_id).await.map(Json)
 }
 
 pub async fn active_alerts_and_reminders(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<Vec<ActiveAlert>>, (StatusCode, Json<ApiError>)> {
-    get_active_alerts_and_reminders(&pool, user_id).await.map(Json).map_err(alerts_reminders_error)
+) -> Result<Json<Vec<ActiveAlert>>> {
+    get_active_alerts_and_reminders(&pool, user_id).await.map(Json)
 }
 
 pub async fn health_check() -> Json<HealthStatus> {
@@ -147,10 +96,8 @@ pub async fn health_check() -> Json<HealthStatus> {
 pub async fn create_user_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateUserRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_public_user(&pool, &payload.public_id)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_public_user(&pool, &payload.public_id).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -158,20 +105,16 @@ pub async fn create_account_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreateAccountRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_account(&pool, user_id, &payload.name, payload.balance)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_account(&pool, user_id, &payload.name, payload.balance).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
 pub async fn create_finance_type_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateFinanceTypeRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_finance_type(&pool, &payload.name)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_finance_type(&pool, &payload.name).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -179,7 +122,7 @@ pub async fn create_transaction_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreateTransactionRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let id = create_transaction(
         &pool,
         user_id,
@@ -188,8 +131,7 @@ pub async fn create_transaction_endpoint(
         payload.amount,
         &payload.description,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -197,7 +139,7 @@ pub async fn create_planned_expense_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreatePlannedExpenseRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let next_date = parse_date(&payload.next_date)?;
     let id = create_planned_expense(
         &pool,
@@ -210,18 +152,15 @@ pub async fn create_planned_expense_endpoint(
         payload.intervalle,
         next_date,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
 pub async fn create_habit_category_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateHabitCategoryRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_habit_category(&pool, &payload.name)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_habit_category(&pool, &payload.name).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -229,7 +168,7 @@ pub async fn create_habit_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreateHabitRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let id = create_habit(
         &pool,
         user_id,
@@ -238,8 +177,7 @@ pub async fn create_habit_endpoint(
         &payload.description,
         &payload.habit_type,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -247,11 +185,9 @@ pub async fn mark_habit_complete_endpoint(
     State(pool): State<DbPool>,
     Path((user_id, habit_id)): Path<(i32, i32)>,
     Json(payload): Json<CompleteHabitRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
-    let id = mark_habit_complete(&pool, user_id, habit_id, date)
-        .await
-        .map_err(today_dashboard_error)?;
+    let id = mark_habit_complete(&pool, user_id, habit_id, date).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -259,21 +195,17 @@ pub async fn create_sobriety_period_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreateSobrietyPeriodRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let start_date = parse_date(&payload.start_date)?;
-    let id = create_sobriety_period(&pool, user_id, start_date)
-        .await
-        .map_err(today_dashboard_error)?;
+    let id = create_sobriety_period(&pool, user_id, start_date).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
 pub async fn create_mood_type_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateMoodTypeRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_mood_type(&pool, &payload.name)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_mood_type(&pool, &payload.name).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -281,11 +213,9 @@ pub async fn log_mood_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogMoodRequest>,
-) -> Result<StatusCode, (StatusCode, Json<ApiError>)> {
+) -> Result<StatusCode> {
     let date = parse_date(&payload.date)?;
-    log_mood(&pool, user_id, payload.type_id, date, payload.notes.as_deref())
-        .await
-        .map_err(today_dashboard_error)?;
+    log_mood(&pool, user_id, payload.type_id, date, payload.notes.as_deref()).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -293,7 +223,7 @@ pub async fn log_hydration_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogHydrationRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_hydration(
         &pool,
@@ -303,8 +233,7 @@ pub async fn log_hydration_endpoint(
         &payload.hydration_type,
         payload.objective,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -312,7 +241,7 @@ pub async fn log_sleep_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogSleepRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_sleep(
         &pool,
@@ -323,8 +252,7 @@ pub async fn log_sleep_endpoint(
         payload.quality,
         payload.is_restful,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -332,7 +260,7 @@ pub async fn log_meal_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogMealRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_meal(
         &pool,
@@ -345,8 +273,7 @@ pub async fn log_meal_endpoint(
         payload.carbs,
         payload.fats,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -354,7 +281,7 @@ pub async fn log_body_measurement_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogBodyMeasurementRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_body_measurement(
         &pool,
@@ -366,18 +293,15 @@ pub async fn log_body_measurement_endpoint(
         payload.waist,
         payload.hips,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
 pub async fn create_sport_type_endpoint(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateSportTypeRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
-    let id = create_sport_type(&pool, &payload.name)
-        .await
-        .map_err(today_dashboard_error)?;
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
+    let id = create_sport_type(&pool, &payload.name).await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -385,7 +309,7 @@ pub async fn log_sport_session_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogSportSessionRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_sport_session(
         &pool,
@@ -397,8 +321,7 @@ pub async fn log_sport_session_endpoint(
         payload.calories,
         &payload.intensity,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -406,11 +329,10 @@ pub async fn log_breathing_session_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogBreathingSessionRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_breathing_session(&pool, user_id, date, &payload.time, payload.duration, &payload.frequency)
-        .await
-        .map_err(today_dashboard_error)?;
+        .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -418,7 +340,7 @@ pub async fn log_alcohol_consumption_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<LogAlcoholConsumptionRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let date = parse_date(&payload.date)?;
     let id = log_alcohol_consumption(
         &pool,
@@ -429,8 +351,7 @@ pub async fn log_alcohol_consumption_endpoint(
         payload.quantity,
         payload.percentage,
     )
-    .await
-    .map_err(today_dashboard_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -438,14 +359,13 @@ pub async fn create_todo_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<CreateTodoRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let _due_date = match payload.due_date.as_deref() {
         Some(value) => Some(parse_date(value)?),
         None => None,
     };
     let id = create_todo(&pool, user_id, &payload.title, payload.description.as_deref(), _due_date)
-        .await
-        .map_err(today_dashboard_error)?;
+        .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -463,7 +383,7 @@ pub async fn save_encrypted_entry_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Json(payload): Json<EncryptedPayloadRequest>,
-) -> Result<(StatusCode, Json<CreatedResponse>), (StatusCode, Json<ApiError>)> {
+) -> Result<(StatusCode, Json<CreatedResponse>)> {
     let id = save_encrypted_entry(
         &pool,
         user_id,
@@ -472,8 +392,7 @@ pub async fn save_encrypted_entry_endpoint(
         &payload.ciphertext,
         payload.version,
     )
-    .await
-    .map_err(encrypted_error)?;
+    .await?;
     Ok((StatusCode::CREATED, Json(CreatedResponse { id })))
 }
 
@@ -483,13 +402,10 @@ pub async fn get_encrypted_entries_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
     Query(params): Query<EncryptedDateQuery>,
-) -> Result<Json<Vec<EncryptedEntry>>, (StatusCode, Json<ApiError>)> {
-    let date_str = params.date.ok_or_else(|| bad_request("Missing query param 'date'"))?;
+) -> Result<Json<Vec<EncryptedEntry>>> {
+    let date_str = params.date.ok_or(AppError::Unauthorized("Missing query param 'date'".into()))?;
     let date = parse_date(&date_str)?;
-    get_encrypted_entries(&pool, user_id, date)
-        .await
-        .map(Json)
-        .map_err(encrypted_error)
+    get_encrypted_entries(&pool, user_id, date).await.map(Json)
 }
 
 /// GET /users/:user_id/encrypted/all
@@ -497,11 +413,8 @@ pub async fn get_encrypted_entries_endpoint(
 pub async fn get_all_encrypted_entries_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<Vec<EncryptedEntry>>, (StatusCode, Json<ApiError>)> {
-    get_all_encrypted_entries(&pool, user_id)
-        .await
-        .map(Json)
-        .map_err(encrypted_error)
+) -> Result<Json<Vec<EncryptedEntry>>> {
+    get_all_encrypted_entries(&pool, user_id).await.map(Json)
 }
 
 /// GET /users/me
@@ -509,26 +422,17 @@ pub async fn get_all_encrypted_entries_endpoint(
 pub async fn get_current_user(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
-) -> Result<Json<User>, (StatusCode, Json<ApiError>)> {
-    get_user_by_id(&pool, user_id)
-        .await
-        .map_err(|_| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError {
-                    message: "Database error".to_string(),
-                }),
-            )
-        })?
-        .ok_or_else(|| {
-            (
-                StatusCode::NOT_FOUND,
-                Json(ApiError {
-                    message: "User not found".to_string(),
-                }),
-            )
-        })
-        .map(Json)
+) -> Result<Json<User>> {
+    let user = get_user_by_id(&pool, user_id).await?.ok_or(AppError::NotFound)?;
+    Ok(Json(user))
+}
+
+pub async fn health_check() -> Json<HealthStatus> {
+    Json(HealthStatus {
+        status: "healthy".to_string(),
+        version: "1.0.0".to_string(),
+        timestamp: Local::now().to_rfc3339(),
+    })
 }
 
 pub async fn api_info() -> Json<ApiInfo> {

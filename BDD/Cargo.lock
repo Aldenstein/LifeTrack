@@ -960,6 +960,7 @@ name = "lifetrackdb"
 version = "3.1.2"
 dependencies = [
  "aes-gcm",
+ "anyhow",
  "argon2",
  "axum",
  "chrono",
