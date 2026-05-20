@@ -12,8 +12,8 @@ use crate::errors::{AppError, Result};
 /// Valide le format et retourne une erreur si invalide
 ///
 /// # Erreurs
-/// Retourne `AppError::Unauthorized` si le format de date est invalide
+/// Retourne `AppError::BadRequest` si le format de date est invalide
 pub fn parse_date(date: &str) -> Result<NaiveDate> {
     NaiveDate::parse_from_str(date, "%Y-%m-%d")
-        .map_err(|_| AppError::Unauthorized(format!("Invalid date format '{date}', expected YYYY-MM-DD")))
+        .map_err(|_| AppError::BadRequest(format!("Invalid date format '{date}', expected YYYY-MM-DD")))
 }

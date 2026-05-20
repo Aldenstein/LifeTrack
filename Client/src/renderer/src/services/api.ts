@@ -1,7 +1,7 @@
 import { useUserStore } from '@/store/userStore'
 
 // ✅ Base URL — pointe vers le tunnel Cloudflare en prod
-// En dev local, change dans .env : VITE_API_URL=http://127.0.0.1:3000
+// En dev local, change dans .env : VITE_API_URL=http://127.0.0.1:8080
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://lifetrack.chocsathan.fr'
 
 function getToken(): string {

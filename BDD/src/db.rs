@@ -9,9 +9,10 @@
 
 use sqlx::{Pool, MySql};
 use sqlx::mysql::MySqlPoolOptions;
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
 
 use crate::config::DbConfig;
+use crate::errors::AppError;
 use crate::models::*;
 
 /// Type alias pour le pool de connexions MySQL
@@ -20,12 +21,12 @@ pub type DbPool = Pool<MySql>;
 
 /// Établit la connexion à la base de données et crée le pool de connexions
 /// Configuration: 5 connexions max simultanées pour éviter surcharge
-pub async fn connect_db(cfg: &DbConfig) -> DbPool {
+pub async fn connect_db(cfg: &DbConfig) -> Result<DbPool, AppError> {
     MySqlPoolOptions::new()
         .max_connections(5)
         .connect(&cfg.url)
         .await
-        .expect("Impossible de se connecter à la base MariaDB/MySQL")
+    .map_err(AppError::from)
 }
 
 // ── Authentification : UTILISATEUR ──────────────────────────────────────────
@@ -2124,7 +2125,7 @@ pub async fn mark_habit_complete(pool: &DbPool, user_id: i32, habit_id: i32, dat
 
 pub async fn create_sobriety_period(pool: &DbPool, user_id: i32, start_date: NaiveDate) -> Result<i32, sqlx::Error> {
     let result = sqlx::query(r#"INSERT INTO SOBRIETE (Sobdebut, Usrid) VALUES (?, ?)"#)
-        .bind(start_date.and_hms_opt(0, 0, 0).unwrap())
+        .bind(start_date.and_time(NaiveTime::MIN))
         .bind(user_id)
         .execute(pool)
         .await?;
@@ -2226,7 +2227,7 @@ pub async fn log_sport_session(pool: &DbPool, user_id: i32, type_id: i32, date: 
 }
 
 pub async fn log_breathing_session(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, duration: i32, frequency: &str) -> Result<i32, sqlx::Error> {
-    let dt = date.and_hms_opt(0, 0, 0).unwrap();
+    let dt = date.and_time(NaiveTime::MIN);
     let result = sqlx::query(r#"INSERT INTO COHERENCE_CARDIAQUE (Cohdateheure, Cohduree, Cohparamcercle, Usrid) VALUES (?, ?, NULL, ?)"#)
         .bind(dt)
         .bind(duration)
@@ -2238,7 +2239,7 @@ pub async fn log_breathing_session(pool: &DbPool, user_id: i32, date: NaiveDate,
 }
 
 pub async fn log_alcohol_consumption(pool: &DbPool, user_id: i32, date: NaiveDate, time: &str, alcohol_type: &str, quantity: f64, percentage: f64) -> Result<i32, sqlx::Error> {
-    let dt = date.and_hms_opt(0, 0, 0).unwrap();
+    let dt = date.and_time(NaiveTime::MIN);
     let result = sqlx::query(r#"INSERT INTO CONSOMMATION_ALCOOL (Alcdateheure, Alcquantite, Alcdegre, Alcjeun, Usrid) VALUES (?, ?, ?, 0, ?)"#)
         .bind(dt)
         .bind(quantity)

@@ -59,7 +59,7 @@ app.whenReady().then(() => {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           "default-src 'self'; " +
-          "connect-src 'self' https://lifetrack.chocsathan.fr ws://localhost:*; " +
+          "connect-src 'self' https://lifetrack.chocsathan.fr http://127.0.0.1:3000 http://127.0.0.1:8080 http://localhost:3000 http://localhost:8080 ws://localhost:*; " +
           "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
           "style-src 'self' 'unsafe-inline'; " +
           "font-src 'self' data:; " +

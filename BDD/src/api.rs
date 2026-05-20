@@ -61,28 +61,28 @@ pub async fn user_profile(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
 ) -> Result<Json<UserProfile>> {
-    get_user_profile(&pool, user_id).await.map(Json)
+    get_user_profile(&pool, user_id).await.map(Json).map_err(Into::into)
 }
 
 pub async fn today_dashboard(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
 ) -> Result<Json<TodayDashboard>> {
-    get_today_dashboard(&pool, user_id).await.map(Json)
+    get_today_dashboard(&pool, user_id).await.map(Json).map_err(Into::into)
 }
 
 pub async fn latest_module_values(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
 ) -> Result<Json<Vec<LatestModuleValues>>> {
-    get_latest_module_values(&pool, user_id).await.map(Json)
+    get_latest_module_values(&pool, user_id).await.map(Json).map_err(Into::into)
 }
 
 pub async fn active_alerts_and_reminders(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
 ) -> Result<Json<Vec<ActiveAlert>>> {
-    get_active_alerts_and_reminders(&pool, user_id).await.map(Json)
+    get_active_alerts_and_reminders(&pool, user_id).await.map(Json).map_err(Into::into)
 }
 
 pub async fn health_check() -> Json<HealthStatus> {
@@ -403,9 +403,11 @@ pub async fn get_encrypted_entries_endpoint(
     Path(user_id): Path<i32>,
     Query(params): Query<EncryptedDateQuery>,
 ) -> Result<Json<Vec<EncryptedEntry>>> {
-    let date_str = params.date.ok_or(AppError::Unauthorized("Missing query param 'date'".into()))?;
+    let date_str = params
+        .date
+        .ok_or(AppError::BadRequest("Missing query param 'date'".into()))?;
     let date = parse_date(&date_str)?;
-    get_encrypted_entries(&pool, user_id, date).await.map(Json)
+    get_encrypted_entries(&pool, user_id, date).await.map(Json).map_err(Into::into)
 }
 
 /// GET /users/:user_id/encrypted/all
@@ -414,7 +416,7 @@ pub async fn get_all_encrypted_entries_endpoint(
     State(pool): State<DbPool>,
     Path(user_id): Path<i32>,
 ) -> Result<Json<Vec<EncryptedEntry>>> {
-    get_all_encrypted_entries(&pool, user_id).await.map(Json)
+    get_all_encrypted_entries(&pool, user_id).await.map(Json).map_err(Into::into)
 }
 
 /// GET /users/me
@@ -425,14 +427,6 @@ pub async fn get_current_user(
 ) -> Result<Json<User>> {
     let user = get_user_by_id(&pool, user_id).await?.ok_or(AppError::NotFound)?;
     Ok(Json(user))
-}
-
-pub async fn health_check() -> Json<HealthStatus> {
-    Json(HealthStatus {
-        status: "healthy".to_string(),
-        version: "1.0.0".to_string(),
-        timestamp: Local::now().to_rfc3339(),
-    })
 }
 
 pub async fn api_info() -> Json<ApiInfo> {

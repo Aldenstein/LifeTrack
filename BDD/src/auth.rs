@@ -118,10 +118,12 @@ pub async fn login_endpoint(
     }
 
     // Reconstruire la clé AES depuis le salt persisté — jamais stockée côté serveur
-    let encryption_key = user.encryption_salt.as_ref().map(|salt_hex| {
-        let salt_bytes = hex::decode(salt_hex).unwrap_or_default();
-        derive_encryption_key(&payload.passphrase, &salt_bytes)
-    });
+    let encryption_key = Some(derive_key_from_stored_salt(
+        user.usrid,
+        user.encryption_salt.as_deref(),
+        &payload.passphrase,
+        "login_endpoint",
+    )?);
 
     let token = generate_jwt(user.usrid, &user.email, &jwt_secret)?;
 
@@ -145,13 +147,38 @@ pub async fn derive_keys_endpoint(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let salt_hex = user.encryption_salt.unwrap_or_default();
-    let salt_bytes = hex::decode(&salt_hex).unwrap_or_default();
+    let salt_hex = user.encryption_salt.as_deref().ok_or_else(|| {
+        eprintln!(
+            "derive_keys_endpoint: missing encryption salt for user_id={} email={}",
+            user.usrid, user.email
+        );
+        AppError::Internal(anyhow::anyhow!(
+            "Missing encryption salt for user_id={} email={}",
+            user.usrid,
+            user.email
+        ))
+    })?;
+
+    let salt_bytes = hex::decode(salt_hex).map_err(|error| {
+        eprintln!(
+            "derive_keys_endpoint: invalid encryption salt for user_id={} email={} salt_len={} error={}",
+            user.usrid,
+            user.email,
+            salt_hex.len(),
+            error
+        );
+        AppError::Internal(anyhow::anyhow!(
+            "Invalid encryption salt for user_id={} email={}: {}",
+            user.usrid,
+            user.email,
+            error
+        ))
+    })?;
     let encryption_key = derive_encryption_key(&payload.passphrase, &salt_bytes);
 
     Ok(Json(DerivedKeysResponse {
         encryption_key,
-        salt: salt_hex,
+        salt: salt_hex.to_string(),
     }))
 }
 
@@ -169,6 +196,38 @@ fn generate_jwt(user_id: i32, email: &str, jwt_secret: &str) -> Result<String> {
     let encoding_key = EncodingKey::from_secret(jwt_secret.as_bytes());
     encode(&Header::default(), &claims, &encoding_key)
         .map_err(|e| AppError::Internal(anyhow::anyhow!("Token generation failed: {}", e)))
+}
+
+fn derive_key_from_stored_salt(
+    user_id: i32,
+    salt_hex: Option<&str>,
+    passphrase: &str,
+    context: &str,
+) -> Result<String> {
+    let salt_hex = salt_hex.ok_or_else(|| {
+        eprintln!("{}: missing encryption salt for user_id={}", context, user_id);
+        AppError::Internal(anyhow::anyhow!(
+            "Missing encryption salt for user_id={}",
+            user_id
+        ))
+    })?;
+
+    let salt_bytes = hex::decode(salt_hex).map_err(|error| {
+        eprintln!(
+            "{}: invalid encryption salt for user_id={} salt_len={} error={}",
+            context,
+            user_id,
+            salt_hex.len(),
+            error
+        );
+        AppError::Internal(anyhow::anyhow!(
+            "Invalid encryption salt for user_id={}: {}",
+            user_id,
+            error
+        ))
+    })?;
+
+    Ok(derive_encryption_key(passphrase, &salt_bytes))
 }
 
 #[allow(dead_code)]
